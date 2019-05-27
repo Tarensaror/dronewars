@@ -11,27 +11,28 @@
     </style>
 </head>
 <body>
-
     <script>
     var config = {
         type: Phaser.AUTO,
-        width: 800,
-        height: 600,
+        width: 1920,
+        height: 1080,
       
 	  physics: {
-            default: 'impact',
-            impact: {
-                //gravity: { x: 300 },
-                debug: false
+            default: 'arcade',
+            arcade: {
+                gravity: { x: 0, y:0 },
+                debug: true
             }
         },
         scene: {
             preload: preload,
             create: create,
-			update: update
+			update: update   
         }
     };
 
+    var player;  
+    var platforms;
     var game = new Phaser.Game(config);
 	
 	
@@ -46,42 +47,82 @@
 		this.load.image('drone', 'assets/drone.png');
 		this.load.image('map', 'assets/map.png');
 		this.load.image('player', 'assets/player1');
-		this.load.image('stadium', 'assets/stadium')
-		this.load.spritesheet('dude', 'assets/dude.png', { frameWidth: 32, frameHeight: 48 });
+		this.load.image('stadium', 'assets/stadium');
+        this.load.image('dude', 'assets/dude.png');
+		this.load.spritesheet('dude_sprite', 'assets/dude.png', { frameWidth: 32, frameHeight: 48 });
     }
 
     function create ()
     {
-		this.add.image((game.config.width)/2, 300, 'map').setScale(0.3);
-		this.add.image(400, 300, 'stadium').setScale(0.05);
-		this.add.image(400, 300, 'drone').setScale(0.2);
+		cursors = this.input.keyboard.createCursorKeys();
+        
+        this.add.image(config.width/2, config.height/2, 'map').setScale(1.0);
+		this.add.image(config.width/2, config.height/2, 'stadium').setScale(0.05);
 		
-		/*
 		
-		player = this.physics.add.sprite(100, 450, 'dude');
+        drone = this.physics.add.image(150, 300, 'drone').setScale(0.2);
+        drone.setVelocityX(30);
+        
+        
+        player = this.physics.add.sprite(400, 450, 'dude_sprite');
+        player.setBounce(0.2);
+        player.setCollideWorldBounds(true);
 		
 		this.anims.create({
 			key: 'left',
-			frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+			frames: this.anims.generateFrameNumbers('dude_sprite', { start: 0, end: 3 }),
 			frameRate: 10,
 			repeat: -1
 		});
+        
+        this.anims.create({
+            key: 'turn',
+            frames: [ { key: 'dude_sprite', frame: 4 } ],
+            frameRate: 20
+        });
 		
 		this.anims.create({
 			key: 'right',
-			frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+			frames: this.anims.generateFrameNumbers('dude_sprite', { start: 5, end: 8 }),
 			frameRate: 10,
 			repeat: -1
-		});
-		
-		*/
-		
+		});	
+        
+        this.physics.add.overlap(player, drone, collectDrone, null, this);
+        
+        
+    }
+        
+    function collectDrone() {
+        drone.disableBody(true, true);
     }
 	
 	function update ()
 	{
-		
-	}
+		if (cursors.left.isDown) {
+        player.setVelocityX(-1600);
+        player.anims.play('left', true);
+        }
+        else if (cursors.right.isDown) {
+                player.setVelocityX(1600);
+                player.anims.play('right', true);
+            }
+        else {
+            player.setVelocityX(0);
+            player.anims.play('turn');
+        }
+        
+        if (cursors.up.isDown)
+        {
+            player.setVelocityY(-1500);
+        }else if (cursors.down.isDown){
+            player.setVelocityY(1500);
+        }
+        else {
+            player.setVelocityY(0);
+        }
+        
+    }
 	
     </script>
 
