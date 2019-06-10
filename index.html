@@ -14,8 +14,8 @@
     <script>
     var config = {
         type: Phaser.CANVAS,
-        width: window.innerWidth * window.devicePixelRatio,
-        height: window.innerHeight * window.devicePixelRatio,
+        width: window.innerWidth,
+        height: window.innerHeight,
 	  physics: {
             default: 'arcade',
             arcade: {
@@ -31,21 +31,27 @@
         }
     };
 
-    var player;  
-    var platforms;
+    var player;
+    var stadium;
     var game = new Phaser.Game(config);
-    var graphics;
+    var graphA;
+    var sectorA, sectorB, sectorC, sectorD, sectorE, sectorF, sectorG, sectorH;
+
+    var outerEllipse, ellipseI, ellipseII, ellipseIII;
+    var path;
+
+    var graphs = [];
+
     var drones;
 	
-	var halfHeight = config.height/2;
-    var halfWidth = config.width/2;
-	
-    var sensorSpeedX =600;
-    var sensorSpeedY =600;
-        
-	
-	// statics& consts
+	var halfHeight = config.height / 2;
+    var halfWidth = config.width / 2;
 
+    var speedFactorX = config.width * 0.1;
+    var speedFactorY = config.height * 0.1;
+
+    var sensorSpeedX = speedFactorX * 2;
+    var sensorSpeedY = speedFactorY * 2;
 
     function preload ()
     {
@@ -60,32 +66,88 @@
 
     function create ()
     {
+
+
+
 		cursors = this.input.keyboard.createCursorKeys();
         
         this.add.image(halfWidth, halfHeight, 'map').setScale(1.0);
-		this.add.image(halfWidth, halfHeight, 'stadium').setScale(0.05);
-        
+		stadium = this.add.image(halfWidth, halfHeight, 'stadium').setScale(0.05);
+        stadium.setDepth(9);
+
         drone = (this.physics.add.image(150, 300, 'drone').setScale(0.2));
         
-        graphics = this.add.graphics(0, 0);
-        
-        graphics.lineStyle(2, 0xffd900, 1);
-        graphics.fillStyle(0xFF00FF, 1);
-        graphics.fillCircle(halfWidth, halfHeight, 50);
-        graphics.strokeCircle(halfWidth, halfHeight, 100);
-        graphics.setDepth(0)
-        
-        console.log(graphics.depth);
+        // sector graphA
+        graphA = this.add.graphics(0, 0);
+        graphA.lineStyle(2, 0xffd900, 1);
+        graphA.fillStyle(0xFF00FF, 1);
+        graphA.fillCircle(halfWidth, halfHeight, 50);
+        graphA.strokeCircle(halfWidth, halfHeight, 100);
+        graphA.setDepth(9);
+
+        var oneOutOfEightX = halfWidth/4;
+        var oneOutOfEightY = halfHeight/4;
+
+        var a, b, x, y;
+        var a2, b2, x2, y2;
+        var index = 0;
+        var lala = this.add.graphics(0, 0);
+        var foo = [];
+        var highlight;
+
+
+        for (var m = 0; m < 24 ; m++) {
+            foo[m] = this.add.graphics(0, 0);
+        }
+
+        for (var i = 0; i < 3;i++) {
+            for(var j = 0; j < 8; j++ ) {
+
+                a = oneOutOfEightX * (1 + i%3);
+                b = oneOutOfEightY * (1 + i%3);
+
+               x = a * Math.cos((Math.PI/4) * (j%8)) + halfWidth;
+               y = b * Math.sin((Math.PI/4) * (j%8)) + halfHeight;
+
+                graphs[index] = this.add.path(x, y);
+
+                a2 = oneOutOfEightX * (2 + i%3);
+                b2 = oneOutOfEightY * (2 + i%3);
+
+                x2 = a2 * Math.cos((Math.PI/4) * (j%8)) + halfWidth;
+                y2 = b2 * Math.sin((Math.PI/4) * (j%8)) + halfHeight;
+
+                graphs[index].lineTo(x2, y2);
+                graphs[index].ellipseTo(oneOutOfEightX * (2 + i%3), oneOutOfEightY * (2 + i%3), (45 * j), 45 * (1 + j), false, 0);
+                graphs[index].lineTo((halfWidth - graphs[index].getEndPoint().x) / (2 + i%3) + graphs[index].getEndPoint().x, (halfHeight - graphs[index].getEndPoint().y) / (2+i%3) + graphs[index].getEndPoint().y) ;
+
+                graphs[index].ellipseTo(oneOutOfEightX * (1 + i%3), (oneOutOfEightY * (1 + i%3)), 45 * (1 + j), (45 * j), true, 0);
+                graphs[index].closePath();
+                graphs[index].draw(foo[index]);
+
+                index++;
+            }
+        }
+
+
+        highlight = foo[3];
+
+        highlight.lineStyle(4, 0x00ff00, 1);
+        graphs[foo.indexOf(highlight)].draw(foo[3]);
+        highlight.setDepth(10);
+        //highlight.clear();
+
+        /*
+        foo[3].lineStyle(4, 0x00ff00, 1);
+        graphs[3].draw(foo[3]);
+        foo[3].setDepth(10);
+*/
 		
         // prepare Background
-		
-        
-       
-        
         player = this.physics.add.sprite(halfWidth, halfHeight, 'dude_sprite');
         player.setBounce(0.2);
         player.setCollideWorldBounds(true);
-        player.setDepth(2);
+        player.setDepth(10);
 		
 		this.anims.create({
 			key: 'left',
@@ -105,16 +167,9 @@
 			frames: this.anims.generateFrameNumbers('dude_sprite', { start: 5, end: 8 }),
 			frameRate: 10,
 			repeat: -1
-		});	
-        
+		});
         this.physics.add.overlap(player, drone, collectDrone, null, this);
-        this.physics.add.overlap(player, graphics, collectDrone, null, this);
-        
-        //platforms = this.physics.add.staticGroup();
-        
-        
-        
-        
+        this.physics.add.overlap(player, graphA, collectDrone, null, this);
     }
         
     function spawnDrone(positionX, positionY) {
