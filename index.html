@@ -35,23 +35,43 @@
     var stadium;
     var game = new Phaser.Game(config);
     var graphA;
-    var sectorA, sectorB, sectorC, sectorD, sectorE, sectorF, sectorG, sectorH;
+    var sectorA = [];
+    var sectorB = [];
+    var sectorC = [];
+    var sectorD = [];
+    var sectorE = [];
+    var sectorF = [];
+    var sectorG = [];
+    var sectorH = [];
 
-    var outerEllipse, ellipseI, ellipseII, ellipseIII;
+    var sectors = [];
     var path;
+
+    var angle;
+    var sector;
 
     var graphs = [];
 
     var drones;
 	
 	var halfHeight = config.height / 2;
-    var halfWidth = config.width / 2;
+    var halfWidth = (config.width / 2)*0.8;
 
     var speedFactorX = config.width * 0.1;
     var speedFactorY = config.height * 0.1;
 
     var sensorSpeedX = speedFactorX * 2;
     var sensorSpeedY = speedFactorY * 2;
+
+    var overlay;
+    var oldSector;
+
+    var foo = [];
+    var highlight;
+
+    var oneOutOfEightX = halfWidth/4;
+    var oneOutOfEightY = halfHeight/4;
+
 
     function preload ()
     {
@@ -66,9 +86,6 @@
 
     function create ()
     {
-
-
-
 		cursors = this.input.keyboard.createCursorKeys();
         
         this.add.image(halfWidth, halfHeight, 'map').setScale(1.0);
@@ -85,15 +102,12 @@
         graphA.strokeCircle(halfWidth, halfHeight, 100);
         graphA.setDepth(9);
 
-        var oneOutOfEightX = halfWidth/4;
-        var oneOutOfEightY = halfHeight/4;
 
         var a, b, x, y;
         var a2, b2, x2, y2;
         var index = 0;
         var lala = this.add.graphics(0, 0);
-        var foo = [];
-        var highlight;
+
 
 
         for (var m = 0; m < 24 ; m++) {
@@ -129,20 +143,33 @@
             }
         }
 
+        // make graphic for highlighting
+        foo[foo.length] = this.add.graphics(0, 0);
+        overlay = foo[foo.length - 1];
 
-        highlight = foo[3];
 
-        highlight.lineStyle(4, 0x00ff00, 1);
-        graphs[foo.indexOf(highlight)].draw(foo[3]);
-        highlight.setDepth(10);
-        //highlight.clear();
+        sectors[0] = sectorA;
+        sectors[1] = sectorB;
+        sectors[2] = sectorC;
+        sectors[3] = sectorD;
+        sectors[4] = sectorE;
+        sectors[5] = sectorF;
+        sectors[6] = sectorG;
+        sectors[7] = sectorH;
 
-        /*
-        foo[3].lineStyle(4, 0x00ff00, 1);
-        graphs[3].draw(foo[3]);
-        foo[3].setDepth(10);
-*/
-		
+        var map = [4, 5, 6, 7, 0, 1, 2, 3];
+
+        {
+            for (var sec =0; sec < 8; sec++) {
+                for (var area = 0; area < 3; area++) {
+                    sectors[sec][area] = foo[map[sec] + (area * 8)];
+                }
+            }
+        }
+
+
+        console.log("test")
+
         // prepare Background
         player = this.physics.add.sprite(halfWidth, halfHeight, 'dude_sprite');
         player.setBounce(0.2);
@@ -183,6 +210,8 @@
 	
 	function update ()
 	{
+	    // sensor animation
+
 		if (cursors.left.isDown) {
         player.setVelocityX(-sensorSpeedX );
         player.anims.play('left', true);
@@ -205,7 +234,33 @@
         else {
             player.setVelocityY(0);
         }
-        
+
+        // highlight handling
+
+        // get sector
+        angle = Math.acos( ((halfWidth-game.input.mousePointer.x) / (Math.sqrt( Math.pow(halfWidth - game.input.mousePointer.x,2) + Math.pow(halfHeight - game.input.mousePointer.y,2 ) ))));
+        if(game.input.mousePointer.y > halfHeight) {
+            angle *= -1;
+        }
+
+        sector = Number(angle/(Math.PI/4));
+        sector= Math.floor(sector);
+        if(sector < 0) {
+            sector = 8 + sector;
+        }
+
+        // get distance
+        var distance = (Math.sqrt( Math.pow(halfWidth - game.input.mousePointer.x,2) + Math.pow(halfHeight - game.input.mousePointer.y,2 )));
+        //if (distance > on)
+
+        highlight = sectors[sector][0];
+
+        if(oldSector != sector) {
+            overlay.clear();
+            overlay.lineStyle(4, 0x00ff00, 1);
+            graphs[foo.indexOf(highlight)].draw(overlay);
+        }
+        oldSector = sector
     }
 	
     </script>
