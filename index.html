@@ -16,7 +16,7 @@
         type: Phaser.CANVAS,
         width: window.innerWidth,
         height: window.innerHeight,
-	  physics: {
+	    physics: {
             default: 'arcade',
             arcade: {
                 gravity: { x: 0, y:0 },
@@ -26,8 +26,8 @@
         scene: {
             preload: preload,
             create: create,
-			update: update   
-            
+			update: update,
+            spawnDrone: spawnDrone
         }
     };
 
@@ -62,6 +62,10 @@
 
     var sensorSpeedX = speedFactorX * 2;
     var sensorSpeedY = speedFactorY * 2;
+        
+    var droneSpeed = 1;
+        
+    var spawnDroneEvent;
 
     var overlay;
     var oldSector;
@@ -76,10 +80,10 @@
     function preload ()
     {
         // Load statics
-		this.load.image('drone', 'assets/drone.png');
+        this.load.spritesheet('droneSprite', 'assets/droneSprite.png', {frameWidth: 280, frameHeight: 280});
 		this.load.image('map', 'assets/map.png');
 		this.load.image('player', 'assets/player1');
-		this.load.image('stadium', 'assets/stadium');
+		this.load.image('stadium', 'assets/stadium.png');
         this.load.image('dude', 'assets/dude.png');
 		this.load.spritesheet('dude_sprite', 'assets/dude.png', { frameWidth: 32, frameHeight: 48 });
     }
@@ -89,10 +93,12 @@
 		cursors = this.input.keyboard.createCursorKeys();
         
         this.add.image(halfWidth, halfHeight, 'map').setScale(1.0);
-		stadium = this.add.image(halfWidth, halfHeight, 'stadium').setScale(0.05);
+		stadium = this.physics.add.image(halfWidth, halfHeight, 'stadium').setScale(0.05);
         stadium.setDepth(9);
-
-        drone = (this.physics.add.image(150, 300, 'drone').setScale(0.2));
+        
+        drones = this.physics.add.group(0);
+        
+        spawnDroneEvent = this.time.addEvent({ delay: Math.random()*1500+5000, callback: spawnDrone, callbackScope: this, loop: true });
         
         // sector graphA
         graphA = this.add.graphics(0, 0);
@@ -195,17 +201,53 @@
 			frameRate: 10,
 			repeat: -1
 		});
-        this.physics.add.overlap(player, drone, collectDrone, null, this);
+        
+        //drone animation        
+        this.anims.create({
+            key: 'fly',
+            frames: this.anims.generateFrameNumbers('droneSprite', {start: 0, end: 3}),
+            frameRate: 15,
+            repeat: -1
+        });
+        
         this.physics.add.overlap(player, graphA, collectDrone, null, this);
+        
     }
         
-    function spawnDrone(positionX, positionY) {
-        drone.setVelocityX(30);
-        drone.setDepth(1);
+    function spawnDrone() {
+        //außerhalb vom bildschirm
+        var xPosition = (Math.random()*(config.width+400))-200;
+        var yPosition =0;
+        if(xPosition < 0 || xPosition > config.width){
+            yPosition = Math.random()*config.height;
+        } else {
+            if((Math.random())>0.5){
+                yPosition = Math.random()*200-200;
+            } else {
+                yPosition = Math.random()*200+config.height;
+            }
+        }
+        
+        var newDrone = (this.physics.add.sprite(xPosition, yPosition, 'droneSprite').setScale(0.2));
+        newDrone.setDepth(20);
+        
+        drones.add(newDrone);
+        this.physics.add.overlap(stadium, drones, collectDrone, null, this);
+        
+        
+        //richtung stadion. szenengröße beachten (bei geschwindigkeit)!
+        var distance = Phaser.Math.Distance.Between(xPosition, yPosition, halfWidth, halfHeight);
+        var speed = droneSpeed*distance*0.1;
+        this.physics.moveTo(newDrone, halfWidth, halfHeight, speed);
+        
+        
+        //sensor fängt drohne - brauchen wir nicht, ist aber lustig
+        //this.physics.add.overlap(player, newDrone, collectDrone, null, this);
     }
         
-    function collectDrone() {
-        drone.destroy();
+    function collectDrone(stadium, newDrone) {
+        drones.remove(newDrone);
+        newDrone.destroy();
     }
 	
 	function update ()
@@ -261,6 +303,14 @@
             graphs[foo.indexOf(highlight)].draw(overlay);
         }
         oldSector = sector
+
+        
+        var currentDrones = drones.getChildren();
+        for(var i = 0; i < currentDrones.length; i++){
+            currentDrones[i].anims.play('fly', true);
+        }
+       
+
     }
 	
     </script>
