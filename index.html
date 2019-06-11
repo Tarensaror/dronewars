@@ -92,10 +92,49 @@
     {
 		cursors = this.input.keyboard.createCursorKeys();
         
+        //sidebar
+        var sidebar = this.add.graphics();
+        sidebar.fillStyle(0xffffff, 1);
+        sidebar.fillRect(halfWidth*2, 0, config.width*0.2, config.height);
+        sidebar.setDepth(100);
+        
+        var sidebarTitle = this.make.text({
+            x: halfWidth*2,
+            y: 0,
+            text: 'Drone Wars', 
+            origin: {x: 0, y: 0},
+            style: { 
+                font: '50px Arial', 
+                color: '#000',
+                wordWrap: { width: config.width*0.2-20, useAdvancedWrap: true} 
+            }
+        }).setPadding(10);
+        sidebarTitle.setDepth(101);
+        
+        //kein linebreak mit \n, neuer Text nötig
+        var sidebarTextContent = [
+            "This is the first sentence. This is the second sentence, including a very loooooooooooooooooooong word (hence useAdvanceWrap)."
+        ]
+        var sidebarText = this.make.text({
+            x: halfWidth*2,
+            y: 120,
+            text: sidebarTextContent, 
+            origin: {x: 0, y: 0},
+            style: { 
+                font: '20px Arial', 
+                color: '#000',
+                wordWrap: { width: config.width*0.2-20, useAdvancedWrap: true} 
+            }
+        }).setPadding(10);
+        sidebarText.setDepth(101);
+        
+        
         this.add.image(halfWidth, halfHeight, 'map').setScale(1.0);
 		stadium = this.physics.add.image(halfWidth, halfHeight, 'stadium').setScale(0.05);
         stadium.setDepth(9);
         
+        
+        //drones
         drones = this.physics.add.group(0);
         
         spawnDroneEvent = this.time.addEvent({ delay: Math.random()*1500+5000, callback: spawnDrone, callbackScope: this, loop: true });
