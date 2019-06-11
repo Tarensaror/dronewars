@@ -100,13 +100,6 @@
         
         spawnDroneEvent = this.time.addEvent({ delay: Math.random()*1500+5000, callback: spawnDrone, callbackScope: this, loop: true });
         
-        // sector graphA
-        graphA = this.add.graphics(0, 0);
-        graphA.lineStyle(2, 0xffd900, 1);
-        graphA.fillStyle(0xFF00FF, 1);
-        graphA.fillCircle(halfWidth, halfHeight, 50);
-        graphA.strokeCircle(halfWidth, halfHeight, 100);
-        graphA.setDepth(9);
 
 
         var a, b, x, y;
@@ -216,9 +209,9 @@
         
     function spawnDrone() {
         //außerhalb vom bildschirm
-        var xPosition = (Math.random()*(config.width+400))-200;
+        var xPosition = (Math.random()*(halfWidth*2+400))-200;
         var yPosition =0;
-        if(xPosition < 0 || xPosition > config.width){
+        if(xPosition < 0 || xPosition > halfWidth*2){
             yPosition = Math.random()*config.height;
         } else {
             if((Math.random())>0.5){
