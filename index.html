@@ -16,7 +16,7 @@
         type: Phaser.CANVAS,
         width: window.innerWidth,
         height: window.innerHeight,
-	  physics: {
+	    physics: {
             default: 'arcade',
             arcade: {
                 gravity: { x: 0, y:0 },
@@ -26,8 +26,8 @@
         scene: {
             preload: preload,
             create: create,
-			update: update   
-            
+			update: update,
+            spawnDrone: spawnDrone
         }
     };
 
@@ -52,6 +52,10 @@
 
     var sensorSpeedX = speedFactorX * 2;
     var sensorSpeedY = speedFactorY * 2;
+        
+    var droneSpeed = 1;
+        
+    var spawnDroneEvent;
 
     function preload ()
     {
@@ -66,16 +70,13 @@
 
     function create ()
     {
-
-
-
 		cursors = this.input.keyboard.createCursorKeys();
         
         this.add.image(halfWidth, halfHeight, 'map').setScale(1.0);
 		stadium = this.add.image(halfWidth, halfHeight, 'stadium').setScale(0.05);
         stadium.setDepth(9);
-
-        drone = (this.physics.add.image(150, 300, 'drone').setScale(0.2));
+        
+        spawnDroneEvent = this.time.addEvent({ delay: Math.random()*1500+5000, callback: spawnDrone, callbackScope: this, loop: true });
         
         // sector graphA
         graphA = this.add.graphics(0, 0);
@@ -168,17 +169,38 @@
 			frameRate: 10,
 			repeat: -1
 		});
-        this.physics.add.overlap(player, drone, collectDrone, null, this);
+        
         this.physics.add.overlap(player, graphA, collectDrone, null, this);
     }
         
-    function spawnDrone(positionX, positionY) {
-        drone.setVelocityX(30);
-        drone.setDepth(1);
+    function spawnDrone() {
+        //außerhalb vom bildschirm
+        var xPosition = (Math.random()*(config.width+400))-200;
+        var yPosition =0;
+        if(xPosition < 0 || xPosition > config.width){
+            yPosition = Math.random()*config.height;
+        } else {
+            if((Math.random())>0.5){
+                yPosition = Math.random()*200-200;
+            } else {
+                yPosition = Math.random()*200+config.height;
+            }
+        }
+        
+        newDrone = (this.physics.add.image(xPosition, yPosition, 'drone').setScale(0.3));
+        newDrone.setDepth(10);
+        
+        //richtung stadion. szenengröße beachten (bei geschwindigkeit)!
+        var distance = Phaser.Math.Distance.Between(xPosition, yPosition, halfWidth, halfHeight);
+        var speed = droneSpeed*distance*0.1;
+        this.physics.moveTo(newDrone, halfWidth, halfHeight, speed);
+        
+        //sensor fängt drohne - brauchen wir nicht, ist aber lustig
+        //this.physics.add.overlap(player, newDrone, collectDrone, null, this);
     }
         
     function collectDrone() {
-        drone.destroy();
+        newDrone.destroy();
     }
 	
 	function update ()
