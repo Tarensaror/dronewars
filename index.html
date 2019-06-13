@@ -53,12 +53,18 @@
 
     var graphs = [];
         
-    var sidebarText;
+    
+    var sidebarStadiumHPDisplay;
+    var sidebarWealthDisplay;
+    var sidebarDroneInfoDisplay;
     var sidebarDroneHPDisplay;
     var sidebarDronePayloadDisplay;
-    var sidebarStadiumHPDisplay;
+    var sidebarDroneRewardDisplay;
+        
+    var refillStadiumHPButton;
         
     var stadiumHP = 100;
+    var wealth = 500;
 
     var drones;
 	
@@ -133,7 +139,7 @@
         //kein linebreak mit \n, neuer Text nötig
         sidebarStadiumHPDisplay = this.make.text({
             x: halfWidth*2,
-            y: 120,
+            y: sidebarTitle.y+120,
             text: "Stadium-HP: " + stadiumHP, 
             origin: {x: 0, y: 0},
             style: { 
@@ -144,9 +150,35 @@
         }).setPadding(10);
         sidebarStadiumHPDisplay.setDepth(101);
         
+        sidebarWealthDisplay = this.make.text({
+            x: halfWidth*2,
+            y: sidebarStadiumHPDisplay.y+25,
+            text: "Vermögen: " + wealth, 
+            origin: {x: 0, y: 0},
+            style: { 
+                font: '22px Arial', 
+                color: '#000',
+                wordWrap: { width: config.width*0.2-20, useAdvancedWrap: true} 
+            }
+        }).setPadding(10);
+        sidebarWealthDisplay.setDepth(101);
+        
+        refillStadiumHPButton = this.add.text(halfWidth*2, sidebarWealthDisplay.y+40, '3 HP wieder auffüllen (Kostet 100)', {fontFamily: 'Arial'});
+        refillStadiumHPButton.setFixedSize(0, 70);
+        refillStadiumHPButton.setInteractive({cursor: 'pointer'}).on('pointerdown', function(){
+            stadiumHP += 3;
+            sidebarStadiumHPDisplay.setText("Stadium-HP: " + stadiumHP);
+            wealth -= 100;
+            sidebarWealthDisplay.setText("Vermögen: " + wealth);
+        })
+        refillStadiumHPButton.setBackgroundColor('#333333');
+        refillStadiumHPButton.setDepth(101);
+        refillStadiumHPButton.setWordWrapWidth(config.width*0.2-20, true);
+        refillStadiumHPButton.setPadding(10);
+        
         sidebarDroneHPDisplay = this.make.text({
             x: halfWidth*2,
-            y: 180,
+            y: refillStadiumHPButton.y+100,
             text: " ", 
             origin: {x: 0, y: 0},
             style: { 
@@ -159,7 +191,7 @@
         
         sidebarDronePayloadDisplay = this.make.text({
             x: halfWidth*2,
-            y: 200,
+            y: sidebarDroneHPDisplay.y+25,
             text: " ", 
             origin: {x: 0, y: 0},
             style: { 
@@ -170,13 +202,26 @@
         }).setPadding(10);
         sidebarDronePayloadDisplay.setDepth(101);
         
-        var sidebarTextContent = [
+        sidebarDroneRewardDisplay = this.make.text({
+            x: halfWidth*2,
+            y: sidebarDronePayloadDisplay.y + 25,
+            text: " ", 
+            origin: {x: 0, y: 0},
+            style: { 
+                font: '20px Arial', 
+                color: '#000',
+                wordWrap: { width: config.width*0.2-20, useAdvancedWrap: true} 
+            }
+        }).setPadding(10);
+        sidebarDroneRewardDisplay.setDepth(101);
+        
+        var sidebarDroneInfoDisplayContent = [
             "This is the first sentence. This is the second sentence, including a very loooooooooooooooooooong word (hence useAdvanceWrap)."
         ]
-        sidebarText = this.make.text({
+        sidebarDroneInfoDisplay = this.make.text({
             x: halfWidth*2,
-            y: 230,
-            text: sidebarTextContent, 
+            y: sidebarDroneRewardDisplay.y+30,
+            text: sidebarDroneInfoDisplayContent, 
             origin: {x: 0, y: 0},
             style: { 
                 font: '16px Arial', 
@@ -184,7 +229,7 @@
                 wordWrap: { width: config.width*0.2-20, useAdvancedWrap: true} 
             }
         }).setPadding(10);
-        sidebarText.setDepth(101);
+        sidebarDroneInfoDisplay.setDepth(101);
         
         
         this.add.image(halfWidth, halfHeight, 'map').setScale(1.0);
@@ -300,7 +345,7 @@
             repeat: -1
         });
         
-        this.physics.add.overlap(player, graphA, collectDrone, null, this);
+        this.physics.add.overlap(player, graphA, collisionDroneStadium, null, this);
         
     }
         
@@ -330,7 +375,9 @@
             case 3:
                 payloadBonus = 1;
         }
-        drone.payload = Math.floor(Math.random()*4)+1+payloadBonus;
+        drone.payload = Math.floor(Math.random()*4)+payloadBonus;
+        
+        drone.reward = Math.floor(Math.random()*500)*drone.payload;
     }
         
     function spawnDrone() {
@@ -353,28 +400,30 @@
         setDroneProperties(newDrone);
         
         drones.add(newDrone);
-        this.physics.add.overlap(stadium, drones, collectDrone, null, this);
+        this.physics.add.overlap(stadium, drones, collisionDroneStadium, null, this);
         
         //richtung stadion. szenengröße beachten (bei geschwindigkeit)!
         var distance = Phaser.Math.Distance.Between(xPosition, yPosition, halfWidth, halfHeight);
         var speed = droneSpeed*distance*newDrone.speed;
         this.physics.moveTo(newDrone, halfWidth, halfHeight, speed);
         
-        this.input.on('gameobjectover', function(pointer, newDrone, event){
+        //hovern für info
+        newDrone.on('pointerover', function(){
             sidebarDroneHPDisplay.setText("Drohnen-HP: " + newDrone.hp);
             sidebarDronePayloadDisplay.setText("Payload: " + newDrone.payload);
-            sidebarText.setText(droneInfo[newDrone.type]);
+            sidebarDroneRewardDisplay.setText("Belohnung: " + newDrone.reward);
+            sidebarDroneInfoDisplay.setText(droneInfo[newDrone.type]);
         })
         
         //Drohnennummer reinschreiben:
-        /*sidebarText.setText(droneNumber);
+        /*sidebarDroneInfoDisplay.setText(droneNumber);
         droneNumber++;*/
         
         //sensor fängt drohne - brauchen wir nicht, ist aber lustig
-        //this.physics.add.overlap(player, newDrone, collectDrone, null, this);
+        //this.physics.add.overlap(player, newDrone, collisionDroneStadium, null, this);
     }
         
-    function collectDrone(stadium, drone) {
+    function collisionDroneStadium(stadium, drone) {
         stadiumHP -= drone.payload;
         sidebarStadiumHPDisplay.setText("Stadium-HP: " + stadiumHP);
         drones.remove(drone);
