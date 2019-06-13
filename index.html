@@ -11,6 +11,576 @@
     </style>
 </head>
 <body>
-<script src="dronewars.js" type="application/javascript"></script>
+    <script>
+    var config = {
+        type: Phaser.CANVAS,
+        width: window.innerWidth,
+        height: window.innerHeight,
+	    physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { x: 0, y:0 },
+                debug: true
+            }
+        },
+        scene: {
+            preload: preload,
+            create: create,
+			update: update,
+            spawnDrone: spawnDrone
+        }
+    };
+
+    // globals
+    {
+        var pointer;
+        var player;
+        var stadium;
+        var game = new Phaser.Game(config);
+        var graphA;
+        var sectorA = [];
+        var sectorB = [];
+        var sectorC = [];
+        var sectorD = [];
+        var sectorE = [];
+        var sectorF = [];
+        var sectorG = [];
+        var sectorH = [];
+
+
+        var ellipsePoints = [];
+
+        var sectors = [];
+        var path;
+
+        var angle;
+        var sector, area;
+
+        var graphs = [];
+
+
+        var sidebarStadiumHPDisplay;
+        var sidebarWealthDisplay;
+        var sidebarDroneInfoDisplay;
+        var sidebarDroneHPDisplay;
+        var sidebarDronePayloadDisplay;
+        var sidebarDroneRewardDisplay;
+
+        var refillStadiumHPButton;
+
+        var stadiumHP = 100;
+        var wealth = 500;
+
+        var drones;
+
+        var halfHeight = config.height / 2;
+        var halfWidth = (config.width / 2) * 0.8;
+
+        var speedFactorX = (halfWidth * 2) * 0.1;
+        var speedFactorY = (halfHeight * 2) * 0.1;
+
+        var sensorSpeedX = speedFactorX * 2;
+        var sensorSpeedY = speedFactorY * 2;
+
+        var droneSpawnFrequency = 1;
+        var droneSpeed = 1;
+
+        var spawnDroneEvent;
+
+        var droneInfo = [
+            "Multi Rotor: Drohne mit geringer Widerstandsfähigkeit, kleinem Payload, aber gute Positionskontrolle. Gut für Kamera-Aufnahmen.",
+            "Single Rotor: Etwas unstabile große Drohne mit großem Payload und langer Flugzeit.",
+            "Starrflügel: Drohne mit langer Flugzeit, die nicht an einer Stelle schweben kann.",
+            "Hybrid: Starrflügel-Drohne, die schweben kann. Lange Flugzeiten und große Präzision."
+        ];
+
+        //var droneNumber = 0;
+
+        var overlay;
+        var oldSector;
+        var oldArea;
+
+        var foo = [];
+        var highlight;
+
+        var oneOutOfEightX = halfWidth / 4;
+        var oneOutOfEightY = halfHeight / 4;
+    }
+
+    function preload ()
+    {
+        // Load images
+        {
+            this.load.image('map', 'assets/map.png');
+            this.load.image('player', 'assets/player1');
+            this.load.image('stadium', 'assets/stadium.png');
+            this.load.image('dude', 'assets/dude.png');
+        }
+
+        // Load spritesheets
+        {
+            this.load.spritesheet('dude_sprite', 'assets/dude.png', {frameWidth: 32, frameHeight: 48});
+            this.load.spritesheet('droneSprite', 'assets/droneSprite.png', {frameWidth: 280, frameHeight: 280});
+        }
+    }
+
+    function create () {
+        pointer = this.input.activePointer;
+        cursors = this.input.keyboard.createCursorKeys();
+
+        //sidebar
+        {
+            var sidebar = this.add.graphics();
+            sidebar.fillStyle(0xffffff, 1);
+            sidebar.fillRect(halfWidth * 2, 0, config.width * 0.2, config.height);
+            sidebar.setDepth(100);
+
+            var sidebarTitle = this.make.text({
+                x: halfWidth * 2,
+                y: 0,
+                text: 'Drone Wars',
+                origin: {x: 0, y: 0},
+                style: {
+                    font: '50px Arial',
+                    color: '#000',
+                    wordWrap: {width: config.width * 0.2 - 20, useAdvancedWrap: true}
+                }
+            }).setPadding(10);
+            sidebarTitle.setDepth(101);
+
+            //kein linebreak mit \n, neuer Text nötig
+            sidebarStadiumHPDisplay = this.make.text({
+                x: halfWidth * 2,
+                y: sidebarTitle.y + 120,
+                text: "Stadium-HP: " + stadiumHP,
+                origin: {x: 0, y: 0},
+                style: {
+                    font: '22px Arial',
+                    color: '#000',
+                    wordWrap: {width: config.width * 0.2 - 20, useAdvancedWrap: true}
+                }
+            }).setPadding(10);
+            sidebarStadiumHPDisplay.setDepth(101);
+
+            sidebarWealthDisplay = this.make.text({
+                x: halfWidth * 2,
+                y: sidebarStadiumHPDisplay.y + 25,
+                text: "Vermögen: " + wealth,
+                origin: {x: 0, y: 0},
+                style: {
+                    font: '22px Arial',
+                    color: '#000',
+                    wordWrap: {width: config.width * 0.2 - 20, useAdvancedWrap: true}
+                }
+            }).setPadding(10);
+            sidebarWealthDisplay.setDepth(101);
+
+            refillStadiumHPButton = this.add.text(halfWidth * 2, sidebarWealthDisplay.y + 40, '3 HP wieder auffüllen (Kostet 100)', {fontFamily: 'Arial'});
+            refillStadiumHPButton.setFixedSize(0, 70);
+            refillStadiumHPButton.setInteractive({cursor: 'pointer'}).on('pointerdown', function () {
+                stadiumHP += 3;
+                sidebarStadiumHPDisplay.setText("Stadium-HP: " + stadiumHP);
+                wealth -= 100;
+                sidebarWealthDisplay.setText("Vermögen: " + wealth);
+            })
+            refillStadiumHPButton.setBackgroundColor('#333333');
+            refillStadiumHPButton.setDepth(101);
+            refillStadiumHPButton.setWordWrapWidth(config.width * 0.2 - 20, true);
+            refillStadiumHPButton.setPadding(10);
+
+            sidebarDroneHPDisplay = this.make.text({
+                x: halfWidth * 2,
+                y: refillStadiumHPButton.y + 100,
+                text: " ",
+                origin: {x: 0, y: 0},
+                style: {
+                    font: '20px Arial',
+                    color: '#000',
+                    wordWrap: {width: config.width * 0.2 - 20, useAdvancedWrap: true}
+                }
+            }).setPadding(10);
+            sidebarDroneHPDisplay.setDepth(101);
+
+            sidebarDronePayloadDisplay = this.make.text({
+                x: halfWidth * 2,
+                y: sidebarDroneHPDisplay.y + 25,
+                text: " ",
+                origin: {x: 0, y: 0},
+                style: {
+                    font: '20px Arial',
+                    color: '#000',
+                    wordWrap: {width: config.width * 0.2 - 20, useAdvancedWrap: true}
+                }
+            }).setPadding(10);
+            sidebarDronePayloadDisplay.setDepth(101);
+
+            sidebarDroneRewardDisplay = this.make.text({
+                x: halfWidth * 2,
+                y: sidebarDronePayloadDisplay.y + 25,
+                text: " ",
+                origin: {x: 0, y: 0},
+                style: {
+                    font: '20px Arial',
+                    color: '#000',
+                    wordWrap: {width: config.width * 0.2 - 20, useAdvancedWrap: true}
+                }
+            }).setPadding(10);
+            sidebarDroneRewardDisplay.setDepth(101);
+
+            var sidebarDroneInfoDisplayContent = [
+                "This is the first sentence. This is the second sentence, including a very loooooooooooooooooooong word (hence useAdvanceWrap)."
+            ]
+            sidebarDroneInfoDisplay = this.make.text({
+                x: halfWidth * 2,
+                y: sidebarDroneRewardDisplay.y + 30,
+                text: sidebarDroneInfoDisplayContent,
+                origin: {x: 0, y: 0},
+                style: {
+                    font: '16px Arial',
+                    color: '#000',
+                    wordWrap: {width: config.width * 0.2 - 20, useAdvancedWrap: true}
+                }
+            }).setPadding(10);
+            sidebarDroneInfoDisplay.setDepth(101);
+        }
+
+        // stadium
+        {
+            this.add.image(halfWidth, halfHeight, 'map').setScale(1.0);
+            stadium = this.physics.add.image(halfWidth, halfHeight, 'stadium').setScale(0.05);
+            stadium.setDepth(9);
+        }
+
+        //drones
+        {
+            drones = this.physics.add.group(0);
+
+            spawnDroneEvent = this.time.addEvent({
+                delay: (Math.random() * 1500 + 5000) / droneSpawnFrequency,
+                callback: spawnDrone,
+                callbackScope: this,
+                loop: true
+            });
+        }
+
+        // create sectors and areas
+        {
+            var a, b, x, y;
+            var a2, b2, x2, y2;
+            var index = 0;
+            var lala = this.add.graphics(0, 0);
+
+
+            for (var m = 0; m < 24; m++) {
+                foo[m] = this.add.graphics(0, 0);
+            }
+
+            for (var i = 0; i < 3; i++) {
+                for (var j = 0; j < 8; j++) {
+
+                    a = oneOutOfEightX * (1 + i % 3);
+                    b = oneOutOfEightY * (1 + i % 3);
+
+                    x = a * Math.cos((Math.PI / 4) * (j % 8)) + halfWidth;
+                    y = b * Math.sin((Math.PI / 4) * (j % 8)) + halfHeight;
+
+                    graphs[index] = this.add.path(x, y);
+
+                    a2 = oneOutOfEightX * (2 + i % 3);
+                    b2 = oneOutOfEightY * (2 + i % 3);
+
+                    x2 = a2 * Math.cos((Math.PI / 4) * (j % 8)) + halfWidth;
+                    y2 = b2 * Math.sin((Math.PI / 4) * (j % 8)) + halfHeight;
+
+                    graphs[index].lineTo(x2, y2);
+                    graphs[index].ellipseTo(oneOutOfEightX * (2 + i % 3), oneOutOfEightY * (2 + i % 3), (45 * j), 45 * (1 + j), false, 0);
+                    graphs[index].lineTo((halfWidth - graphs[index].getEndPoint().x) / (2 + i % 3) + graphs[index].getEndPoint().x, (halfHeight - graphs[index].getEndPoint().y) / (2 + i % 3) + graphs[index].getEndPoint().y);
+
+                    graphs[index].ellipseTo(oneOutOfEightX * (1 + i % 3), (oneOutOfEightY * (1 + i % 3)), 45 * (1 + j), (45 * j), true, 0);
+                    graphs[index].closePath();
+                    graphs[index].draw(foo[index]);
+
+                    // fill helper array
+                    {
+                        ellipsePoints[j] = [x2 - x, y2 - y, Math.sqrt(Math.pow(x2 - x, 2) + Math.pow(y2 - y, 2))];
+                        ellipsePoints[j].push(Math.acos((x2 - x) / Math.sqrt(Math.pow(x2 - x, 2) + Math.pow(y2 - y, 2))));
+
+                        if (ellipsePoints[j][1] < 0) {
+                            ellipsePoints[j][3] *= -1;
+                        }
+                    }
+
+                    index++;
+                }
+            }
+        }
+
+        // create graphic for highlighting
+        {
+            foo[foo.length] = this.add.graphics(0, 0);
+            overlay = foo[foo.length - 1];
+
+            sectors[0] = sectorA;
+            sectors[1] = sectorB;
+            sectors[2] = sectorC;
+            sectors[3] = sectorD;
+            sectors[4] = sectorE;
+            sectors[5] = sectorF;
+            sectors[6] = sectorG;
+            sectors[7] = sectorH;
+
+            var map = [4, 5, 6, 7, 0, 1, 2, 3];
+
+            {
+                for (var sec = 0; sec < 8; sec++) {
+                    for (var area = 0; area < 3; area++) {
+                        sectors[sec][area] = foo[map[sec] + (area * 8)];
+                    }
+                }
+            }
+        }
+
+        // prepare sensor
+        {
+            player = this.physics.add.sprite(halfWidth, halfHeight, 'dude_sprite');
+            player.setBounce(0.2);
+            player.setCollideWorldBounds(true);
+            player.setDepth(10);
+
+
+            this.anims.create({
+                key: 'left',
+                frames: this.anims.generateFrameNumbers('dude_sprite', {start: 0, end: 3}),
+                frameRate: 10,
+                repeat: -1
+            });
+
+            this.anims.create({
+                key: 'turn',
+                frames: [{key: 'dude_sprite', frame: 4}],
+                frameRate: 20
+            });
+
+            this.anims.create({
+                key: 'right',
+                frames: this.anims.generateFrameNumbers('dude_sprite', {start: 5, end: 8}),
+                frameRate: 10,
+                repeat: -1
+            });
+        }
+
+        // prepare drone
+        {
+            this.anims.create({
+                key: 'fly',
+                frames: this.anims.generateFrameNumbers('droneSprite', {start: 0, end: 3}),
+                frameRate: 60,
+                repeat: -1
+            });
+        }
+
+        // collision detection
+        {
+            this.physics.add.overlap(player, graphA, collisionDroneStadium, null, this);
+        }
+    }
+        
+    function setDroneProperties(drone){
+        drone.speed = Math.random()*0.1;
+        
+        /*
+         * 0 - Multirotor - payload smol
+         * 1 - Single Rotor - payload big
+         * 2 - Starrflügel - payload ?
+         * 3 - Hybrid - payload ?
+         */
+        drone.type = Math.floor(Math.random()*4);
+        
+        drone.hp = Math.floor(Math.random()*4)+1+drone.type;
+        var payloadBonus;
+        switch(drone.type){
+            case 0:
+                payloadBonus = 0;
+                break;
+            case 1:
+                payloadBonus = 3;
+                break;
+            case 2:
+                payloadBonus = 1;
+                break;
+            case 3:
+                payloadBonus = 1;
+        }
+        drone.payload = Math.floor(Math.random()*4)+payloadBonus;
+        
+        drone.reward = Math.floor(Math.random()*500)*drone.payload;
+    }
+        
+    function spawnDrone() {
+        //außerhalb vom bildschirm
+        var xPosition = (Math.random()*(halfWidth*2+400))-200;
+        var yPosition =0;
+        if(xPosition < 0 || xPosition > halfWidth*2){
+            yPosition = Math.random()*config.height;
+        } else {
+            if((Math.random())>0.5){
+                yPosition = Math.random()*200-200;
+            } else {
+                yPosition = Math.random()*200+config.height;
+            }
+        }
+        
+        var newDrone = (this.physics.add.sprite(xPosition, yPosition, 'droneSprite').setScale(0.2)).setInteractive();
+        newDrone.setDepth(20);
+        
+        setDroneProperties(newDrone);
+        
+        drones.add(newDrone);
+        this.physics.add.overlap(stadium, drones, collisionDroneStadium, null, this);
+        
+        //richtung stadion. szenengröße beachten (bei geschwindigkeit)!
+        var distance = Phaser.Math.Distance.Between(xPosition, yPosition, halfWidth, halfHeight);
+        var speed = droneSpeed*distance*newDrone.speed;
+        this.physics.moveTo(newDrone, halfWidth, halfHeight, speed);
+        
+        //hovern für info
+        newDrone.on('pointerover', function(){
+            sidebarDroneHPDisplay.setText("Drohnen-HP: " + newDrone.hp);
+            sidebarDronePayloadDisplay.setText("Payload: " + newDrone.payload);
+            sidebarDroneRewardDisplay.setText("Belohnung: " + newDrone.reward);
+            sidebarDroneInfoDisplay.setText(droneInfo[newDrone.type]);
+        });
+        
+        //Drohnennummer reinschreiben:
+        /*sidebarDroneInfoDisplay.setText(droneNumber);
+        droneNumber++;*/
+        
+        //sensor fängt drohne - brauchen wir nicht, ist aber lustig
+        //this.physics.add.overlap(player, newDrone, collisionDroneStadium, null, this);
+    }
+        
+    function collisionDroneStadium(stadium, drone) {
+        stadiumHP -= drone.payload;
+        sidebarStadiumHPDisplay.setText("Stadium-HP: " + stadiumHP);
+        drones.remove(drone);
+        drone.destroy();
+    }
+	
+	function update ()
+	{
+	    // sensor animation
+        {
+            if (cursors.left.isDown) {
+                player.setVelocityX(-sensorSpeedX);
+                player.anims.play('left', true);
+            }
+            else if (cursors.right.isDown) {
+                player.setVelocityX(sensorSpeedX);
+                player.anims.play('right', true);
+            }
+            else {
+                player.setVelocityX(0);
+                player.anims.play('turn');
+            }
+
+            if (cursors.up.isDown) {
+                player.setVelocityY(-sensorSpeedY);
+            } else if (cursors.down.isDown) {
+                player.setVelocityY(sensorSpeedY);
+            }
+            else {
+                player.setVelocityY(0);
+            }
+        }
+
+        // highlight handling
+        {
+            var secArea = getSectorArea(game.input.mousePointer.x, game.input.mousePointer.y);
+            sector = secArea[0];
+            area = secArea[1];
+
+            highlight = sectors[sector][area];
+
+            if (oldSector != sector || oldArea != area) {
+                overlay.clear();
+                overlay.lineStyle(4, 0x00ff00, 1);
+                graphs[foo.indexOf(highlight)].draw(overlay);
+            }
+            oldSector = sector;
+            oldArea = area;
+        }
+
+        // drone animation
+        {
+            var currentDrones = drones.getChildren();
+            for (var j = 0; j < currentDrones.length; j++) {
+                currentDrones[j].anims.play('fly', true);
+            }
+        }
+    }
+
+    function getSectorArea ( positionX, positionY ) {
+
+        // get sector
+        var angle = Math.acos( ((halfWidth - positionX) / (Math.sqrt( Math.pow(halfWidth - positionX,2) + Math.pow(halfHeight - positionY,2 ) ))));
+        if(positionY > halfHeight) {
+            angle *= -1;
+        }
+
+        var sector;
+
+        var distanceMouse = Math.sqrt( Math.pow(halfWidth - positionX,2) + Math.pow(halfHeight - positionY,2 ));
+        var distance;
+        var area;
+
+        var a = oneOutOfEightX;
+        var b = oneOutOfEightY;
+
+        var x = a * Math.cos(angle);
+        var y = b * Math.sin(angle);
+
+        // to be improved
+        if (angle < ellipsePoints[5][3]) {
+            sector = 4;
+        } else if (angle < ellipsePoints[6][3]) {
+            sector = 5;
+        } else if (angle < ellipsePoints[7][3]) {
+            sector = 6;
+        } else if (angle < ellipsePoints[0][3]) {
+            sector = 7;
+        } else if (angle < ellipsePoints[1][3]) {
+            sector = 0;
+        } else if (angle < ellipsePoints[2][3]) {
+            sector = 1;
+        } else if (angle < ellipsePoints[3][3]) {
+            sector = 2;
+        } else if (angle < ellipsePoints[4][3]) {
+            sector = 3;
+        }
+
+        // get distance
+        distance = Math.sqrt( (Math.pow(x,2) + Math.pow(y,2 )) );
+
+        for(var i = 0; i < 3; i++) {
+            if(distanceMouse > distance * (i + 1) ) {
+                area = i;
+            }
+        }
+
+        // inner ellipse
+        if (distanceMouse < distance) {
+            area = 0;
+        }
+
+        // outer ellipse
+        if (distanceMouse > distance * 3) {
+            area = 2;
+        }
+
+        return [sector,area,distanceMouse];
+    }
+	
+    </script>
+
 </body>
 </html>
