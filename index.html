@@ -54,6 +54,7 @@
     var graphs = [];
         
     var sidebarText;
+    var sidebarHPDisplay;
 
     var drones;
 	
@@ -66,9 +67,17 @@
     var sensorSpeedX = speedFactorX * 2;
     var sensorSpeedY = speedFactorY * 2;
         
+    var droneSpawnFrequency = 1;
     var droneSpeed = 1;
         
     var spawnDroneEvent;
+        
+    var droneInfo = [
+        "Multi Rotor: Drohne mit geringer Widerstandsfähigkeit, kleinem Payload, aber gute Positionskontrolle. Gut für Kamera-Aufnahmen.",
+        "Single Rotor: Etwas unstabile große Drohne mit großem Payload und langer Flugzeit.",
+        "Starrflügel: Drohne mit langer Flugzeit, die nicht an einer Stelle schweben kann.",
+        "Hybrid: Starrflügel-Drohne, die schweben kann. Lange Flugzeiten und große Präzision."
+    ]
         
     //var droneNumber = 0;
 
@@ -118,16 +127,29 @@
         sidebarTitle.setDepth(101);
         
         //kein linebreak mit \n, neuer Text nötig
+        sidebarHPDisplay = this.make.text({
+            x: halfWidth*2,
+            y: 120,
+            text: " ", 
+            origin: {x: 0, y: 0},
+            style: { 
+                font: '25px Arial', 
+                color: '#000',
+                wordWrap: { width: config.width*0.2-20, useAdvancedWrap: true} 
+            }
+        }).setPadding(10);
+        sidebarHPDisplay.setDepth(101);
+        
         var sidebarTextContent = [
             "This is the first sentence. This is the second sentence, including a very loooooooooooooooooooong word (hence useAdvanceWrap)."
         ]
         sidebarText = this.make.text({
             x: halfWidth*2,
-            y: 120,
+            y: 150,
             text: sidebarTextContent, 
             origin: {x: 0, y: 0},
             style: { 
-                font: '20px Arial', 
+                font: '16px Arial', 
                 color: '#000',
                 wordWrap: { width: config.width*0.2-20, useAdvancedWrap: true} 
             }
@@ -143,7 +165,7 @@
         //drones
         drones = this.physics.add.group(0);
         
-        spawnDroneEvent = this.time.addEvent({ delay: Math.random()*1500+5000, callback: spawnDrone, callbackScope: this, loop: true });
+        spawnDroneEvent = this.time.addEvent({ delay: (Math.random()*1500+5000)/droneSpawnFrequency, callback: spawnDrone, callbackScope: this, loop: true });
         
 
 
@@ -252,6 +274,20 @@
         
     }
         
+    function setDroneProperties(drone){
+        drone.speed = Math.random()*0.1;
+        
+        /*
+         * 0 - Multirotor
+         * 1 - Single Rotor
+         * 2 - Starrflügel
+         * 3 - Hybrid
+         */
+        drone.type = Math.floor(Math.random()*4);
+        
+        drone.hp = Math.floor(Math.random()*4)+1+drone.type;
+    }
+        
     function spawnDrone() {
         //außerhalb vom bildschirm
         var xPosition = (Math.random()*(halfWidth*2+400))-200;
@@ -269,18 +305,19 @@
         var newDrone = (this.physics.add.sprite(xPosition, yPosition, 'droneSprite').setScale(0.2)).setInteractive();
         newDrone.setDepth(20);
         
+        setDroneProperties(newDrone);
+        
         drones.add(newDrone);
         this.physics.add.overlap(stadium, drones, collectDrone, null, this);
         
         //richtung stadion. szenengröße beachten (bei geschwindigkeit)!
         var distance = Phaser.Math.Distance.Between(xPosition, yPosition, halfWidth, halfHeight);
-        var speed = droneSpeed*distance*0.1;
+        var speed = droneSpeed*distance*newDrone.speed;
         this.physics.moveTo(newDrone, halfWidth, halfHeight, speed);
         
-        var droneInfo = Math.random()*10+1;
-        
         this.input.on('gameobjectover', function(pointer, newDrone, event){
-            sidebarText.setText(droneInfo);
+            sidebarHPDisplay.setText("HP: " + newDrone.hp);
+            sidebarText.setText(droneInfo[newDrone.type]);
         })
         
         //Drohnennummer reinschreiben:
