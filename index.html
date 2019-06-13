@@ -55,6 +55,7 @@
 
         var angle;
         var sector, area;
+        var sensorSector;
 
         var graphs = [];
 
@@ -112,7 +113,7 @@
         // Load images
         {
             this.load.image('map', 'assets/map.png');
-            this.load.image('player', 'assets/player1');
+            this.load.image('player', 'assets/player.png');
             this.load.image('stadium', 'assets/stadium.png');
             this.load.image('dude', 'assets/dude.png');
         }
@@ -249,6 +250,11 @@
             this.add.image(halfWidth, halfHeight, 'map').setScale(1.0);
             stadium = this.physics.add.image(halfWidth, halfHeight, 'stadium').setScale(0.05);
             stadium.setDepth(9);
+        }
+
+        // sensor
+        {
+            sensor = this.physics.add.image(halfWidth, halfHeight, 'player').setScale(0.4);
         }
 
         //drones
@@ -517,6 +523,18 @@
                 currentDrones[j].anims.play('fly', true);
             }
         }
+
+        // place sensor at selected sector
+        this.input.on('pointerdown', function(pointer){
+            var sec = getSectorArea(pointer.x, pointer.y);
+            if(sec[1] === 0){
+                sensorSector = sec[0]
+                var highSector = graphs[foo.indexOf(highlight)];
+                var endPoint = highSector.curves[2].p1;
+                sensor.x = highSector.startPoint.x - ((highSector.startPoint.x - endPoint.x)/2);
+                sensor.y = highSector.startPoint.y - ((highSector.startPoint.y - endPoint.y)/2);
+            }
+        }, this);
     }
 
     function getSectorArea ( positionX, positionY ) {
