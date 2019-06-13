@@ -54,7 +54,11 @@
     var graphs = [];
         
     var sidebarText;
-    var sidebarHPDisplay;
+    var sidebarDroneHPDisplay;
+    var sidebarDronePayloadDisplay;
+    var sidebarStadiumHPDisplay;
+        
+    var stadiumHP = 100;
 
     var drones;
 	
@@ -127,25 +131,51 @@
         sidebarTitle.setDepth(101);
         
         //kein linebreak mit \n, neuer Text nötig
-        sidebarHPDisplay = this.make.text({
+        sidebarStadiumHPDisplay = this.make.text({
             x: halfWidth*2,
             y: 120,
-            text: " ", 
+            text: "Stadium-HP: " + stadiumHP, 
             origin: {x: 0, y: 0},
             style: { 
-                font: '25px Arial', 
+                font: '22px Arial', 
                 color: '#000',
                 wordWrap: { width: config.width*0.2-20, useAdvancedWrap: true} 
             }
         }).setPadding(10);
-        sidebarHPDisplay.setDepth(101);
+        sidebarStadiumHPDisplay.setDepth(101);
+        
+        sidebarDroneHPDisplay = this.make.text({
+            x: halfWidth*2,
+            y: 180,
+            text: " ", 
+            origin: {x: 0, y: 0},
+            style: { 
+                font: '20px Arial', 
+                color: '#000',
+                wordWrap: { width: config.width*0.2-20, useAdvancedWrap: true} 
+            }
+        }).setPadding(10);
+        sidebarDroneHPDisplay.setDepth(101);
+        
+        sidebarDronePayloadDisplay = this.make.text({
+            x: halfWidth*2,
+            y: 200,
+            text: " ", 
+            origin: {x: 0, y: 0},
+            style: { 
+                font: '20px Arial', 
+                color: '#000',
+                wordWrap: { width: config.width*0.2-20, useAdvancedWrap: true} 
+            }
+        }).setPadding(10);
+        sidebarDronePayloadDisplay.setDepth(101);
         
         var sidebarTextContent = [
             "This is the first sentence. This is the second sentence, including a very loooooooooooooooooooong word (hence useAdvanceWrap)."
         ]
         sidebarText = this.make.text({
             x: halfWidth*2,
-            y: 150,
+            y: 230,
             text: sidebarTextContent, 
             origin: {x: 0, y: 0},
             style: { 
@@ -278,14 +308,29 @@
         drone.speed = Math.random()*0.1;
         
         /*
-         * 0 - Multirotor
-         * 1 - Single Rotor
-         * 2 - Starrflügel
-         * 3 - Hybrid
+         * 0 - Multirotor - payload smol
+         * 1 - Single Rotor - payload big
+         * 2 - Starrflügel - payload ?
+         * 3 - Hybrid - payload ?
          */
         drone.type = Math.floor(Math.random()*4);
         
         drone.hp = Math.floor(Math.random()*4)+1+drone.type;
+        var payloadBonus;
+        switch(drone.type){
+            case 0:
+                payloadBonus = 0;
+                break;
+            case 1:
+                payloadBonus = 3;
+                break;
+            case 2:
+                payloadBonus = 1;
+                break;
+            case 3:
+                payloadBonus = 1;
+        }
+        drone.payload = Math.floor(Math.random()*4)+1+payloadBonus;
     }
         
     function spawnDrone() {
@@ -316,7 +361,8 @@
         this.physics.moveTo(newDrone, halfWidth, halfHeight, speed);
         
         this.input.on('gameobjectover', function(pointer, newDrone, event){
-            sidebarHPDisplay.setText("HP: " + newDrone.hp);
+            sidebarDroneHPDisplay.setText("Drohnen-HP: " + newDrone.hp);
+            sidebarDronePayloadDisplay.setText("Payload: " + newDrone.payload);
             sidebarText.setText(droneInfo[newDrone.type]);
         })
         
@@ -328,9 +374,11 @@
         //this.physics.add.overlap(player, newDrone, collectDrone, null, this);
     }
         
-    function collectDrone(stadium, newDrone) {
-        drones.remove(newDrone);
-        newDrone.destroy();
+    function collectDrone(stadium, drone) {
+        stadiumHP -= drone.payload;
+        sidebarStadiumHPDisplay.setText("Stadium-HP: " + stadiumHP);
+        drones.remove(drone);
+        drone.destroy();
     }
 	
 	function update ()
