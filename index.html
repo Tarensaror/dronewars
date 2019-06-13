@@ -31,6 +31,7 @@
         }
     };
 
+    var pointer;
     var player;
     var stadium;
     var game = new Phaser.Game(config);
@@ -51,6 +52,8 @@
     var sector;
 
     var graphs = [];
+        
+    var sidebarText;
 
     var drones;
 	
@@ -66,6 +69,8 @@
     var droneSpeed = 1;
         
     var spawnDroneEvent;
+        
+    //var droneNumber = 0;
 
     var overlay;
     var oldSector;
@@ -90,6 +95,7 @@
 
     function create ()
     {
+        pointer = this.input.activePointer;
 		cursors = this.input.keyboard.createCursorKeys();
         
         //sidebar
@@ -115,7 +121,7 @@
         var sidebarTextContent = [
             "This is the first sentence. This is the second sentence, including a very loooooooooooooooooooong word (hence useAdvanceWrap)."
         ]
-        var sidebarText = this.make.text({
+        sidebarText = this.make.text({
             x: halfWidth*2,
             y: 120,
             text: sidebarTextContent, 
@@ -260,18 +266,26 @@
             }
         }
         
-        var newDrone = (this.physics.add.sprite(xPosition, yPosition, 'droneSprite').setScale(0.2));
+        var newDrone = (this.physics.add.sprite(xPosition, yPosition, 'droneSprite').setScale(0.2)).setInteractive();
         newDrone.setDepth(20);
         
         drones.add(newDrone);
         this.physics.add.overlap(stadium, drones, collectDrone, null, this);
-        
         
         //richtung stadion. szenengröße beachten (bei geschwindigkeit)!
         var distance = Phaser.Math.Distance.Between(xPosition, yPosition, halfWidth, halfHeight);
         var speed = droneSpeed*distance*0.1;
         this.physics.moveTo(newDrone, halfWidth, halfHeight, speed);
         
+        var droneInfo = Math.random()*10+1;
+        
+        this.input.on('gameobjectover', function(pointer, newDrone, event){
+            sidebarText.setText(droneInfo);
+        })
+        
+        //Drohnennummer reinschreiben:
+        /*sidebarText.setText(droneNumber);
+        droneNumber++;*/
         
         //sensor fängt drohne - brauchen wir nicht, ist aber lustig
         //this.physics.add.overlap(player, newDrone, collectDrone, null, this);
