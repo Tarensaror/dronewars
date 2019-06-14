@@ -33,11 +33,25 @@
 
     // globals
     {
+
+        var game = new Phaser.Game(config);
+
+        var halfHeight = config.height / 2;
+        var halfWidth = (config.width / 2) * 0.8;
+
+        var speedFactorX = (halfWidth * 2) * 0.1;
+        var speedFactorY = (halfHeight * 2) * 0.1;
+
+        var sensorSpeedX = speedFactorX * 2;
+        var sensorSpeedY = speedFactorY * 2;
+
+        var oneOutOfEightX = halfWidth / 4;
+        var oneOutOfEightY = halfHeight / 4;
+        
         var pointer;
         var player;
         var stadium;
-        var game = new Phaser.Game(config);
-        var graphA;
+
         var sectorA = [];
         var sectorB = [];
         var sectorC = [];
@@ -47,13 +61,9 @@
         var sectorG = [];
         var sectorH = [];
 
-
         var ellipsePoints = [];
 
         var sectors = [];
-        var path;
-
-        var angle;
         var sector, area;
         var sensorSector;
 
@@ -74,15 +84,6 @@
 
         var drones;
 
-        var halfHeight = config.height / 2;
-        var halfWidth = (config.width / 2) * 0.8;
-
-        var speedFactorX = (halfWidth * 2) * 0.1;
-        var speedFactorY = (halfHeight * 2) * 0.1;
-
-        var sensorSpeedX = speedFactorX * 2;
-        var sensorSpeedY = speedFactorY * 2;
-
         var droneSpawnFrequency = 1;
         var droneSpeed = 1;
 
@@ -101,11 +102,10 @@
         var oldSector;
         var oldArea;
 
-        var foo = [];
+        var sceneGraphics = [];
         var highlight;
 
-        var oneOutOfEightX = halfWidth / 4;
-        var oneOutOfEightY = halfHeight / 4;
+
     }
 
     function preload ()
@@ -279,7 +279,7 @@
 
 
             for (var m = 0; m < 24; m++) {
-                foo[m] = this.add.graphics(0, 0);
+                sceneGraphics[m] = this.add.graphics(0, 0);
             }
 
             for (var i = 0; i < 3; i++) {
@@ -305,7 +305,7 @@
 
                     graphs[index].ellipseTo(oneOutOfEightX * (1 + i % 3), (oneOutOfEightY * (1 + i % 3)), 45 * (1 + j), (45 * j), true, 0);
                     graphs[index].closePath();
-                    graphs[index].draw(foo[index]);
+                    graphs[index].draw(sceneGraphics[index]);
 
                     // fill helper array
                     {
@@ -324,8 +324,8 @@
 
         // create graphic for highlighting
         {
-            foo[foo.length] = this.add.graphics(0, 0);
-            overlay = foo[foo.length - 1];
+            sceneGraphics[sceneGraphics.length] = this.add.graphics(0, 0);
+            overlay = sceneGraphics[sceneGraphics.length - 1];
 
             sectors[0] = sectorA;
             sectors[1] = sectorB;
@@ -341,7 +341,7 @@
             {
                 for (var sec = 0; sec < 8; sec++) {
                     for (var area = 0; area < 3; area++) {
-                        sectors[sec][area] = foo[map[sec] + (area * 8)];
+                        sectors[sec][area] = sceneGraphics[map[sec] + (area * 8)];
                     }
                 }
             }
@@ -452,7 +452,7 @@
             if (oldSector != sector || oldArea != area) {
                 overlay.clear();
                 overlay.lineStyle(4, 0x00ff00, 1);
-                graphs[foo.indexOf(highlight)].draw(overlay);
+                graphs[sceneGraphics.indexOf(highlight)].draw(overlay);
             }
             oldSector = sector;
             oldArea = area;
@@ -471,7 +471,7 @@
             var sec = getSectorArea(pointer.x, pointer.y);
             if(sec[1] === 0){
                 sensorSector = sec[0]
-                var highSector = graphs[foo.indexOf(highlight)];
+                var highSector = graphs[sceneGraphics.indexOf(highlight)];
                 var endPoint = highSector.curves[2].p1;
                 sensor.x = highSector.startPoint.x - ((highSector.startPoint.x - endPoint.x)/2);
                 sensor.y = highSector.startPoint.y - ((highSector.startPoint.y - endPoint.y)/2);
