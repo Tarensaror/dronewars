@@ -51,6 +51,7 @@
         var pointer;
         var player;
         var stadium;
+		var sensor;
 
         var sectorA = [];
         var sectorB = [];
@@ -99,6 +100,8 @@
         //var droneNumber = 0;
 
         var overlay;
+		var sensorOverlay;
+		
         var oldSector;
         var oldArea;
 
@@ -256,6 +259,8 @@
         {
             sensor = this.physics.add.image(halfWidth, halfHeight, 'player').setScale(0.4);
             sensor.setDepth(10);
+			sensor.range = 3;
+			sensor.posChange = false;
         }
 
         //drones
@@ -326,6 +331,8 @@
         {
             sceneGraphics[sceneGraphics.length] = this.add.graphics(0, 0);
             overlay = sceneGraphics[sceneGraphics.length - 1];
+			sceneGraphics[sceneGraphics.length] = this.add.graphics(0, 0);
+			sensorOverlay = sceneGraphics[sceneGraphics.length - 1];
 
             sectors[0] = sectorA;
             sectors[1] = sectorB;
@@ -441,21 +448,52 @@
 	
 	function update ()
 	{
+		// sensor placement
+        this.input.on('pointerdown', function(pointer){
+            var sec = getSectorArea(pointer.x, pointer.y);
+            if(sec[1] === 0){
+                sensorSector = sec[0]
+                var highSector = graphs[sceneGraphics.indexOf(highlight)];
+                var endPoint = highSector.curves[2].p1;
+                sensor.x = highSector.startPoint.x - ((highSector.startPoint.x - endPoint.x)/2);
+                sensor.y = highSector.startPoint.y - ((highSector.startPoint.y - endPoint.y)/2);
+				sensor.posChange = true;
+            }
+        }, this);
+	
         // highlight handling
         {
             var secArea = getSectorArea(game.input.mousePointer.x, game.input.mousePointer.y);
             sector = secArea[0];
             area = secArea[1];
-
             highlight = sectors[sector][area];
+			
+			if(sensor.posChange){
+				var activeSensorHighlight = getSectorArea(sensor.x, sensor.y);
+				var sensorSector = activeSensorHighlight[0];
+				var sensorArea = activeSensorHighlight[1];
+				var sensorHighlight = sectors[sensorSector][sensorArea];
+				
+				sensorOverlay.clear();
+				for(var count = 0; sensor.range > count; count++) {
+						sensorOverlay.lineStyle(6, 0xff0000, 1);
+						graphs[sceneGraphics.indexOf(sectors[sensorSector][count])].draw(sensorOverlay);
+				}
+				sensor.posChange = false;
+			}
+			
 
             if (oldSector != sector || oldArea != area) {
                 overlay.clear();
-                overlay.lineStyle(4, 0x00ff00, 1);
+                overlay.lineStyle(3, 0x00ff00, 1);
                 graphs[sceneGraphics.indexOf(highlight)].draw(overlay);
+				overlay.setDepth(50);
             }
             oldSector = sector;
             oldArea = area;
+			
+			
+				
         }
 
         // drone animation
@@ -465,24 +503,20 @@
                 currentDrones[j].anims.play('fly', true);
             }
         }
-
-        // sensor placement
-        this.input.on('pointerdown', function(pointer){
-            var sec = getSectorArea(pointer.x, pointer.y);
-            if(sec[1] === 0){
-                sensorSector = sec[0]
-                var highSector = graphs[sceneGraphics.indexOf(highlight)];
-                var endPoint = highSector.curves[2].p1;
-                sensor.x = highSector.startPoint.x - ((highSector.startPoint.x - endPoint.x)/2);
-                sensor.y = highSector.startPoint.y - ((highSector.startPoint.y - endPoint.y)/2);
-            }
-        }, this);
     }
 
     function getSectorArea ( positionX, positionY ) {
 
         // get sector
-        var angle = Math.acos( ((halfWidth - positionX) / (Math.sqrt( Math.pow(halfWidth - positionX,2) + Math.pow(halfHeight - positionY,2 ) ))));
+		var angle;
+		
+		var t1 = (Math.sqrt( Math.pow(halfWidth - positionX,2) + Math.pow(halfHeight - positionY,2 )));
+		if(t1!=0){
+			angle = Math.acos( ((halfWidth - positionX) / t1));
+		}else {
+		angle = 0;
+		}
+		
         if(positionY > halfHeight) {
             angle *= -1;
         }
