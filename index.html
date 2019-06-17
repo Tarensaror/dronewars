@@ -259,7 +259,7 @@
         {
             sensor = this.physics.add.image(halfWidth, halfHeight, 'player').setScale(0.4);
             sensor.setDepth(10);
-			sensor.range = 3;
+			sensor.range = 2;
 			sensor.posChange = false;
         }
 
@@ -452,14 +452,28 @@
         this.input.on('pointerdown', function(pointer){
             var sec = getSectorArea(pointer.x, pointer.y);
             if(sec[1] === 0){
-                sensorSector = sec[0]
+                //sensorSector = sec[0];
                 var highSector = graphs[sceneGraphics.indexOf(highlight)];
                 var endPoint = highSector.curves[2].p1;
                 sensor.x = highSector.startPoint.x - ((highSector.startPoint.x - endPoint.x)/2);
                 sensor.y = highSector.startPoint.y - ((highSector.startPoint.y - endPoint.y)/2);
 				sensor.posChange = true;
+				sensor.sector = sec[0];
             }
         }, this);
+
+        // catch drones
+        this.input.keyboard.on('keydown', function(){
+            let dronesArray = drones.children.entries;
+            dronesArray.forEach(function(drone){
+                let s = getSectorArea(drone.x, drone.y);
+                if(s[0] === sensor.sector && s[1] <= (sensor.range-1)){
+                    console.log('drone catched!!!');
+                    drone.destroy();
+                }
+            });
+        }, this);
+
 	
         // highlight handling
         {
