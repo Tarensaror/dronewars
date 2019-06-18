@@ -110,6 +110,7 @@
         var sceneGraphics = [];
         var highlight;
         var spaceKey;
+        var gameOverText;
 
     }
 
@@ -400,6 +401,12 @@
                 repeat: -1
             });
         }
+        
+        gameOverText = this.add.text(0, 0, 'GAME OVER', {fontSize: '32px', fill: '#fff'});
+        gameOverText.setBackgroundColor('#000');
+        gameOverText.setPadding(halfWidth-gameOverText.width/2, halfHeight-gameOverText.height/2);
+        gameOverText.setDepth(200);
+        gameOverText.setVisible(false);
     }
         
     function setDroneProperties(drone){
@@ -430,7 +437,7 @@
         }
         drone.payload = Math.floor(Math.random()*4)+payloadBonus;
         
-        drone.reward = Math.floor(Math.random()*500)*drone.payload;
+        drone.reward = Math.floor(Math.random()*5)*100*drone.payload;
     }
         
     function spawnDrone() {
@@ -478,6 +485,9 @@
         
     function collisionDroneStadium(stadium, drone) {
         stadiumHP -= drone.payload;
+        if(stadiumHP <= 0){
+            gameOver();
+        }
         sidebarStadiumHPDisplay.setText("Stadium-HP: " + stadiumHP);
         drones.remove(drone);
         drone.destroy();
@@ -631,6 +641,11 @@
         }
 
         return [sector,area,distanceMouse];
+    }
+        
+    function gameOver(){
+        gameOverText.setVisible(true);
+        game.scene.pause("default");
     }
 	
     </script>
