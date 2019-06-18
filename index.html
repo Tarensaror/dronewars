@@ -52,6 +52,7 @@
         var player;
         var stadium;
 		var sensor;
+		var sensorTypes = ['Eagle','LMG','Net','EMP'];
 
         var sectorA = [];
         var sectorB = [];
@@ -77,6 +78,7 @@
         var sidebarDroneHPDisplay;
         var sidebarDronePayloadDisplay;
         var sidebarDroneRewardDisplay;
+        var sensorPropsDisplay;
 
         var refillStadiumHPButton;
 
@@ -131,6 +133,38 @@
     function create () {
         pointer = this.input.activePointer;
         cursors = this.input.keyboard.createCursorKeys();
+
+        // stadium
+        {
+            this.add.image(halfWidth, halfHeight, 'map').setScale(1.0);
+            stadium = this.physics.add.image(halfWidth, halfHeight, 'stadium').setScale(0.05);
+            stadium.setDepth(9);
+        }
+
+        // sensor
+        {
+            sensor = this.physics.add.image(halfWidth, halfHeight, 'player').setScale(0.4);
+            sensor.setDepth(10);
+			sensor.range = 2;
+			sensor.posChange = false;
+			sensor.properties = {
+			    type: sensorTypes[Math.floor(Math.random() * (3 -1 + 1) + 1)],
+                range: Math.floor(Math.random() * (3 - 1 + 1) + 1),
+                actionPoints: 4
+            }
+        }
+
+        //drones
+        {
+            drones = this.physics.add.group(0);
+
+            spawnDroneEvent = this.time.addEvent({
+                delay: (Math.random() * 1500 + 5000) / droneSpawnFrequency,
+                callback: spawnDrone,
+                callbackScope: this,
+                loop: true
+            });
+        }
 
         //sidebar
         {
@@ -246,33 +280,33 @@
                 }
             }).setPadding(10);
             sidebarDroneInfoDisplay.setDepth(101);
-        }
 
-        // stadium
-        {
-            this.add.image(halfWidth, halfHeight, 'map').setScale(1.0);
-            stadium = this.physics.add.image(halfWidth, halfHeight, 'stadium').setScale(0.05);
-            stadium.setDepth(9);
-        }
+            // sensor sidebar info
+            var sensorTitle = this.make.text({
+                x: halfWidth * 2,
+                y: sidebarDroneInfoDisplay.y + 120,
+                text: 'Sensor',
+                origin: {x: 0, y: 0},
+                style: {
+                    font: '40px Arial',
+                    color: '#000',
+                    wordWrap: {width: config.width * 0.2 - 20, useAdvancedWrap: true}
+                }
+            }).setPadding(10);
+            sensorTitle.setDepth(101);
 
-        // sensor
-        {
-            sensor = this.physics.add.image(halfWidth, halfHeight, 'player').setScale(0.4);
-            sensor.setDepth(10);
-			sensor.range = 2;
-			sensor.posChange = false;
-        }
-
-        //drones
-        {
-            drones = this.physics.add.group(0);
-
-            spawnDroneEvent = this.time.addEvent({
-                delay: (Math.random() * 1500 + 5000) / droneSpawnFrequency,
-                callback: spawnDrone,
-                callbackScope: this,
-                loop: true
-            });
+            sensorPropsDisplay = this.make.text({
+                x: halfWidth * 2,
+                y: sensorTitle.y + 80,
+                text: "Typ: " + sensor.properties.type + '\n\n' + 'Sichtweite: ' + sensor.properties.range + '\n\n' + 'Aktionspunkte: ' + sensor.properties.actionPoints,
+                origin: {x: 0, y: 0},
+                style: {
+                    font: '22px Arial',
+                    color: '#000',
+                    wordWrap: {width: config.width * 0.2 - 20, useAdvancedWrap: true}
+                }
+            }).setPadding(10);
+            sensorPropsDisplay.setDepth(101);
         }
 
         // create sectors and areas
@@ -450,6 +484,8 @@
 	{
 		// sensor placement
         this.input.on('pointerdown', function(pointer){
+            // check actionsPoints
+            if(sensor.properties.actionPoints)
             var sec = getSectorArea(pointer.x, pointer.y);
             if(sec[1] === 0){
                 //sensorSector = sec[0];
@@ -467,7 +503,7 @@
             let dronesArray = drones.children.entries;
             dronesArray.forEach(function(drone){
                 let s = getSectorArea(drone.x, drone.y);
-                if(s[0] === sensor.sector && s[1] <= (sensor.range-1)){
+                if(s[0] === sensor.sector && s[1] <= (sensor.properties.range-1)){
                     console.log('drone catched!!!');
                     drone.destroy();
                 }
@@ -489,7 +525,7 @@
 				var sensorHighlight = sectors[sensorSector][sensorArea];
 				
 				sensorOverlay.clear();
-				for(var count = 0; sensor.range > count; count++) {
+				for(var count = 0; sensor.properties.range > count; count++) {
 						sensorOverlay.lineStyle(6, 0xff0000, 1);
 						graphs[sceneGraphics.indexOf(sectors[sensorSector][count])].draw(sensorOverlay);
 				}
