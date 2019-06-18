@@ -33,7 +33,6 @@
 
     // globals
     {
-
         var game = new Phaser.Game(config);
 
         var halfHeight = config.height / 2;
@@ -111,6 +110,9 @@
         var highlight;
         var spaceKey;
 
+
+
+        var debugOn =false;
     }
 
 
@@ -485,20 +487,24 @@
 	
 	function update ()
 	{
+	    if(debugOn=true){console.log("Mouse Sector = " + getSectorArea(game.input.mousePointer.x, game.input.mousePointer.y)[0] + " Mouse Area = " + getSectorArea(game.input.mousePointer.x, game.input.mousePointer.y)[1]);};
+
+
 		// sensor placement
         this.input.on('pointerdown', function(pointer){
             // check actionsPoints
             if(sensor.properties.actionPoints)
             var sec = getSectorArea(pointer.x, pointer.y);
-            if(sec[1] === 0){
-                //sensorSector = sec[0];
-                var highSector = graphs[sceneGraphics.indexOf(highlight)];
+
+                var sensorSector = sectors[sec[0]][0];
+                var highSector = graphs[sceneGraphics.indexOf(sensorSector)];
                 var endPoint = highSector.curves[2].p1;
+
+
                 sensor.x = highSector.startPoint.x - ((highSector.startPoint.x - endPoint.x)/2);
                 sensor.y = highSector.startPoint.y - ((highSector.startPoint.y - endPoint.y)/2);
 				sensor.posChange = true;
 				sensor.sector = sec[0];
-            }
         }, this);
 
         // catch drones
@@ -508,10 +514,10 @@
                 let s = getSectorArea(drone.x, drone.y);
                 if(s[0] === sensor.sector && s[1] <= (sensor.properties.range-1)){
                     if(drone.hp <= sensor.properties.damage){
-                        console.log('drone eliminated!!!');
+                        if(debugOn){console.log('drone eliminated!!!');}
                         drone.destroy();
                     }else{
-                        console.log('drone damaged!!!');
+                        if(debugOn){console.log('drone damaged!!!');}
                         drone.hp -= sensor.properties.damage;
                     }
                 }
@@ -534,7 +540,7 @@
 				var sensorHighlight = sectors[sensorSector][sensorArea];
 				
 				sensorOverlay.clear();
-				for(var count = 0; sensor.properties.range > count; count++) {
+				for(let count = 0; sensor.properties.range > count; count++) {
 						sensorOverlay.lineStyle(6, 0xff0000, 1);
 						graphs[sceneGraphics.indexOf(sectors[sensorSector][count])].draw(sensorOverlay);
 				}
@@ -558,7 +564,7 @@
         // drone animation
         {
             var currentDrones = drones.getChildren();
-            for (var j = 0; j < currentDrones.length; j++) {
+            for (let j = 0; j < currentDrones.length; j++) {
                 currentDrones[j].anims.play('fly', true);
             }
         }
@@ -614,7 +620,7 @@
         // get distance
         distance = Math.sqrt( (Math.pow(x,2) + Math.pow(y,2 )) );
 
-        for(var i = 0; i < 3; i++) {
+        for(let i = 0; i < 3; i++) {
             if(distanceMouse > distance * (i + 1) ) {
                 area = i;
             }
