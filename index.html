@@ -48,7 +48,7 @@
         var oneOutOfEightY = halfHeight / 4;
         
         var pointer;
-        var player;
+        var player = {};
         var stadium;
 		var sensor;
 		var sensorTypes = ['Eagle','LMG','Net','EMP'];
@@ -78,6 +78,7 @@
         var sidebarDronePayloadDisplay;
         var sidebarDroneRewardDisplay;
         var sensorPropsDisplay;
+        var sideBarPlayerDisplay;
 
         var refillStadiumHPButton;
 
@@ -138,6 +139,10 @@
         pointer = this.input.activePointer;
         cursors = this.input.keyboard.createCursorKeys();
         spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+        // player init
+        player.actionPoints = 4;
+        player.coins = 1000;
 
         // stadium
         {
@@ -222,11 +227,11 @@
             refillStadiumHPButton = this.add.text(halfWidth * 2, sidebarWealthDisplay.y + 40, '3 HP wieder auffüllen (Kostet 100)', {fontFamily: 'Arial'});
             refillStadiumHPButton.setFixedSize(0, 70);
             refillStadiumHPButton.setInteractive({cursor: 'pointer'}).on('pointerdown', function () {
-                if(wealth >= 100){
+                if(player.coins >= 100){
                     stadiumHP += 3;
                     sidebarStadiumHPDisplay.setText("Stadium-HP: " + stadiumHP);
-                    wealth -= 100;
-                    sidebarWealthDisplay.setText("Vermögen: " + wealth);
+                    player.coins -= 100;
+                    sideBarPlayerDisplay.setText("Coins: " + player.coins + ' ' + 'Aktionspunkte: ' + player.actionPoints,);
                 }
             })
             refillStadiumHPButton.setBackgroundColor('#333333');
@@ -306,7 +311,7 @@
             sensorPropsDisplay = this.make.text({
                 x: halfWidth * 2,
                 y: sensorTitle.y + 80,
-                text: "Typ: " + sensor.properties.type + '\n\n' + 'Sichtweite: ' + sensor.properties.range + '\n\n' + 'Schaden: ' + sensor.properties.damage + '\n\n' + 'Aktionspunkte: ' + sensor.properties.actionPoints,
+                text: "Typ: " + sensor.properties.type + '\n\n' + 'Sichtweite: ' + sensor.properties.range + '\n\n' + 'Schaden: ' + sensor.properties.damage,
                 origin: {x: 0, y: 0},
                 style: {
                     font: '22px Arial',
@@ -315,6 +320,33 @@
                 }
             }).setPadding(10);
             sensorPropsDisplay.setDepth(101);
+
+            // play info
+            var playerTitle = this.make.text({
+                x: halfWidth * 2,
+                y: halfHeight*2-170,
+                text: 'Spieler',
+                origin: {x: 0, y: 0},
+                style: {
+                    font: '40px Arial',
+                    color: '#000',
+                    wordWrap: {width: config.width * 0.2 - 20, useAdvancedWrap: true}
+                }
+            }).setPadding(10);
+            playerTitle.setDepth(101);
+
+            sideBarPlayerDisplay = this.make.text({
+                x: halfWidth * 2,
+                y: halfHeight*2-100,
+                text: "Coins: " + player.coins + ' ' + 'Aktionspunkte: ' + player.actionPoints,
+                origin: {x: 0, y: 0},
+                style: {
+                    font: '22px Arial',
+                    color: '#000',
+                    wordWrap: {width: config.width * 0.2 - 20, useAdvancedWrap: true}
+                }
+            }).setPadding(10);
+            sideBarPlayerDisplay.setDepth(101);
         }
 
         // create sectors and areas
@@ -473,10 +505,19 @@
         
         //hovern für info
         newDrone.on('pointerover', function(){
-            sidebarDroneHPDisplay.setText("Drohnen-HP: " + newDrone.hp);
-            sidebarDronePayloadDisplay.setText("Payload: " + newDrone.payload);
-            sidebarDroneRewardDisplay.setText("Belohnung: " + newDrone.reward);
-            sidebarDroneInfoDisplay.setText(droneInfo[newDrone.type]);
+            if(player.actionPoints > 0) {
+                sidebarDroneHPDisplay.setText("Drohnen-HP: " + newDrone.hp);
+                sidebarDronePayloadDisplay.setText("Payload: " + newDrone.payload);
+                sidebarDroneRewardDisplay.setText("Belohnung: " + newDrone.reward);
+                sidebarDroneInfoDisplay.setText(droneInfo[newDrone.type]);
+                player.actionPoints -= 1;
+                sideBarPlayerDisplay.setText("Coins: " + player.coins + ' ' + 'Aktionspunkte: ' + player.actionPoints)
+            }else{
+                sidebarDroneHPDisplay.setText("Drohnen-HP: ");
+                sidebarDronePayloadDisplay.setText("Payload: ");
+                sidebarDroneRewardDisplay.setText("Belohnung: ");
+                sidebarDroneInfoDisplay.setText('keine Informationen sichtbar');
+            }
         });
         
         //Drohnennummer reinschreiben:
@@ -505,7 +546,7 @@
 		// sensor placement
         this.input.on('pointerdown', function(pointer){
             // check actionsPoints
-            if(sensor.properties.actionPoints)
+            //if(sensor.properties.actionPoints)
             var sec = getSectorArea(pointer.x, pointer.y);
 
                 var sensorSector = sectors[sec[0]][0];
@@ -528,16 +569,22 @@
                     if(drone.hp <= sensor.properties.damage){
                         if(debugOn){console.log('drone eliminated!!!');}
                         drone.destroy();
+                        player.coins += drone.reward;
+                        sideBarPlayerDisplay.setText("Coins: " + player.coins + ' ' + 'Aktionspunkte: ' + player.actionPoints);
+                        sidebarDroneHPDisplay.setText("Drohnen-HP: ");
+                        sidebarDronePayloadDisplay.setText("Payload: ");
+                        sidebarDroneRewardDisplay.setText("Belohnung: ");
+                        sidebarDroneInfoDisplay.setText('');
                     }else{
                         if(debugOn){console.log('drone damaged!!!');}
                         drone.hp -= sensor.properties.damage;
                         drone.setTintFill('#ff0000');
+                        if(player.actionPoints > 0)
+                            sidebarDroneHPDisplay.setText('Drohnen-HP: ' + drone.hp)
                     }
                 }
             });
         }
-
-
 	
         // highlight handling
         {
