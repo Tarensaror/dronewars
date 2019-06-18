@@ -28,6 +28,15 @@
             create: create,
 			update: update,
             spawnDrone: spawnDrone
+        },
+        audio: {
+            mute: false,
+            volume: 1,
+            rate: 1,
+            detune: 0,
+            seek: 0,
+            loop: true,
+            delay: 0
         }
     };
 
@@ -111,9 +120,9 @@
         var spaceKey;
         var gameOverText;
 
+        var backgroundTheme = 'backgroundTheme_2';
 
-
-        var debugOn =false;
+        var debugOn = false;
     }
 
 
@@ -132,9 +141,19 @@
             this.load.spritesheet('dude_sprite', 'assets/dude.png', {frameWidth: 32, frameHeight: 48});
             this.load.spritesheet('droneSprite', 'assets/droneSprite.png', {frameWidth: 280, frameHeight: 280});
         }
+
+        // Load Music
+        {
+            this.load.audio('backgroundTheme_1', 'music/background_1.wav');
+            this.load.audio('backgroundTheme_2', 'music/background_2.wav');
+        }
+
     }
 
     function create () {
+        var music = this.sound.add(backgroundTheme , config.audio);
+        music.play(config.audio);
+
         pointer = this.input.activePointer;
         cursors = this.input.keyboard.createCursorKeys();
         spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
@@ -497,7 +516,7 @@
 	
 	function update ()
 	{
-	    if(debugOn=true){console.log("Mouse Sector = " + getSectorArea(game.input.mousePointer.x, game.input.mousePointer.y)[0] + " Mouse Area = " + getSectorArea(game.input.mousePointer.x, game.input.mousePointer.y)[1]);};
+	    if(debugOn){console.log("Mouse Sector = " + getSectorArea(game.input.mousePointer.x, game.input.mousePointer.y)[0] + " Mouse Area = " + getSectorArea(game.input.mousePointer.x, game.input.mousePointer.y)[1]);};
 
 
 		// sensor placement
