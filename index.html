@@ -20,7 +20,7 @@
             default: 'arcade',
             arcade: {
                 gravity: { x: 0, y:0 },
-                debug: true
+                debug: false
             }
         },
         scene: {
@@ -167,6 +167,8 @@
     }
 
     function create () {
+		
+		
         music = this.sound.add(backgroundTheme , config.audio);
         gameoverMusic = this.sound.add('gameover' , config.gameover);
         killMusic = this.sound.add('kill', config.gameover);
@@ -626,7 +628,7 @@
             let dronesArray = drones.children.entries;
             dronesArray.forEach(function(drone){
                 let s = getSectorArea(drone.x, drone.y);
-                if(s[0] === sensor.sector && s[1] <= (sensor.properties.range-1)){
+                if( !s[3] && s[0] === sensor.sector && s[1] <= (sensor.properties.range-1)){
                     if(drone.hp <= sensor.properties.damage){
                         if(debugOn){console.log('drone eliminated!!!');}
                         drone.destroy();
@@ -655,6 +657,7 @@
             var secArea = getSectorArea(game.input.mousePointer.x, game.input.mousePointer.y);
             sector = secArea[0];
             area = secArea[1];
+			
             highlight = sectors[sector][area];
 			
 			if(sensor.posChange){
@@ -715,6 +718,7 @@
         var distanceMouse = Math.sqrt( Math.pow(halfWidth - positionX,2) + Math.pow(halfHeight - positionY,2 ));
         var distance;
         var area;
+		var behind = false ;
 
         var a = oneOutOfEightX;
         var b = oneOutOfEightY;
@@ -756,11 +760,12 @@
         }
 
         // outer ellipse
-        if (distanceMouse > distance * 3) {
+        if (distanceMouse > distance * 4) {
             area = 2;
+			behind = true;
         }
 
-        return [sector,area,distanceMouse];
+        return [sector,area,distanceMouse,behind];
     }
         
     function gameOver(){
