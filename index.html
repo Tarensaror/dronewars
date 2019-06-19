@@ -13,7 +13,7 @@
 <body>
     <script>
     var config = {
-        type: Phaser.CANVAS,
+        type: Phaser.AUTO,
         width: window.innerWidth,
         height: window.innerHeight,
 	    physics: {
@@ -642,7 +642,7 @@
                     }else{
                         if(debugOn){console.log('drone damaged!!!');}
                         drone.hp -= sensor.properties.damage;
-                        drone.setTintFill('#ff0000');
+                        drone.setTint(0xff0000);
                         if(player.actionPoints > 0)
                             sidebarDroneHPDisplay.setText('Drohnen-HP: ' + drone.hp)
                     }
