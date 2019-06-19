@@ -37,7 +37,17 @@
             seek: 0,
             loop: true,
             delay: 0
+        },
+        gameover: {
+            mute: false,
+            volume: 1,
+            rate: 1,
+            detune: 0,
+            seek: 0,
+            loop: false,
+            delay: 0
         }
+
     };
 
     // globals
@@ -122,8 +132,11 @@
         var gameOverText;
 
         var backgroundTheme = 'backgroundTheme_1';
+        var music;
+        var gameoverMusic;
 
         var debugOn = false;
+        var trigger = true;
     }
 
 
@@ -147,12 +160,18 @@
         {
             this.load.audio('backgroundTheme_1', 'music/background_1.wav');
             this.load.audio('backgroundTheme_2', 'music/background_2.wav');
+            this.load.audio('kill', 'music/kill.wav');
+            this.load.audio('gameover', 'music/gameover.wav');
         }
 
     }
 
     function create () {
-        var music = this.sound.add(backgroundTheme , config.audio);
+        music = this.sound.add(backgroundTheme , config.audio);
+        gameoverMusic = this.sound.add('gameover' , config.gameover);
+        killMusic = this.sound.add('kill', config.gameover);
+
+
         music.play(config.audio);
 
         pointer = this.input.activePointer;
@@ -550,7 +569,21 @@
     function collisionDroneStadium(stadium, drone) {
         stadiumHP -= drone.payload;
         if(stadiumHP <= 0){
-            gameOver();
+
+            if(trigger) {
+                trigger = false;
+                music.pause();
+                gameoverMusic.play();
+            };
+
+            this.time.addEvent({
+                delay: 1800,
+                callback: gameOver,
+                callbackScope: this,
+                loop: false
+            });
+
+            //gameOver();
         }
         sidebarStadiumHPDisplay.setText("Stadium-HP: " + stadiumHP);
         drones.remove(drone);
@@ -594,6 +627,9 @@
                         sidebarDronePayloadDisplay.setText("Payload: ");
                         sidebarDroneRewardDisplay.setText("Belohnung: ");
                         sidebarDroneInfoDisplay.setText('');
+
+                        killMusic.play();
+
                     }else{
                         if(debugOn){console.log('drone damaged!!!');}
                         drone.hp -= sensor.properties.damage;
@@ -719,8 +755,9 @@
     }
         
     function gameOver(){
-        gameOverText.setVisible(true);
-        game.scene.pause("default");
+        gameoverMusic.pause();
+            gameOverText.setVisible(true);
+            game.scene.pause("default");
     }
 	
     </script>
