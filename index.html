@@ -70,7 +70,7 @@
         var player = {};
         var stadium;
 		var sensor;
-		var sensorTypes = ['Eagle','LMG','Net','EMP'];
+		var sensorTypes = ['Adler','LMG','Netz','EMP'];
 
         var sectorA = [];
         var sectorB = [];
@@ -158,6 +158,9 @@
         var playerCoins;
         var playerPoints;
         var playerStadium;
+
+        var upgradeRangeButton;
+        var upgradeDamageButton;
 
         var u; //undefined for displayupdates
     }
@@ -259,6 +262,19 @@
                 }
             };
 
+            var buttonConfig = {
+                x: window.innerWidth-300,
+                y: 0,
+                text: '+ 1',
+                origin: {x: 0, y: 0},
+                style: {
+                    font: '40px Arial',
+                    color: '#000',
+                    wordWrap: {width: config.width * 0.2 - 20, useAdvancedWrap: true},
+                    backgroundColor: '#aaaaaa'
+                }
+            };
+
             sidebarTitle = this.make.text(textFieldConfig).setPadding(10).setDepth(101).setText('Drone Wars').setFont('60px Arial');
 
             // drone Display
@@ -310,6 +326,29 @@
                 points: playerPoints,
                 stadium: playerStadium
             };
+
+            // Upgrade buttons
+            upgradeRangeButton = this.make.text(buttonConfig).setPadding(10).setDepth(101)
+                .setY(sensorType.y+50)
+                .setInteractive({cursor: 'pointer'}).on('pointerdown', function (){
+                    if(player.coins >= 0 && sensor.properties.range <= 10){
+                        sensor.properties.range++;
+                        player.coins -= 100;
+                        updateSensor(u,sensor.properties.range,u);
+                        updatePlayer(player.coins,u);
+                    }
+                });
+
+            upgradeDamageButton = this.make.text(buttonConfig).setPadding(10).setDepth(101)
+                .setY(sensorRange.y+50)
+                .setInteractive({cursor: 'pointer'}).on('pointerdown', function (){
+                    if(player.coins >= 0 && sensor.properties.damage <= 10){
+                        sensor.properties.damage++;
+                        player.coins -= 100;
+                        updateSensor(u,u,sensor.properties.damage);
+                        updatePlayer(u,player.coins);
+                    }
+                });
         }
 
         // create sectors and areas
