@@ -331,7 +331,7 @@
             upgradeRangeButton = this.make.text(buttonConfig).setPadding(10).setDepth(101)
                 .setY(sensorType.y+50)
                 .setInteractive({cursor: 'pointer'}).on('pointerdown', function (){
-                    if(player.coins >= 0 && sensor.properties.range <= 10){
+                    if(player.coins >= 0 && sensor.properties.range < 3){
                         sensor.properties.range++;
                         player.coins -= 100;
                         updateSensor(u,sensor.properties.range,u);
@@ -342,7 +342,7 @@
             upgradeDamageButton = this.make.text(buttonConfig).setPadding(10).setDepth(101)
                 .setY(sensorRange.y+50)
                 .setInteractive({cursor: 'pointer'}).on('pointerdown', function (){
-                    if(player.coins >= 0 && sensor.properties.damage <= 10){
+                    if(player.coins >= 0 && sensor.properties.damage < 10){
                         sensor.properties.damage++;
                         player.coins -= 100;
                         updateSensor(u,u,sensor.properties.damage);
