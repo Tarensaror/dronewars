@@ -54,6 +54,9 @@
     // globals
     {
         var game = new Phaser.Game(config);
+        
+        var difficulty = 1;
+        var difficultyPeriodInMinutes = 3;
 
         var halfHeight = config.height / 2;
         var halfWidth = (config.width / 2) * 0.8;
@@ -199,11 +202,22 @@
 
     function create () {
 		thisGame = this;
+        
+        this.time.addEvent({
+                delay: 1000*60*difficultyPeriodInMinutes,
+                callback: function(){
+                    difficulty++;
+                    droneSpawnFrequency+=10;
+                    console.log(droneSpawnFrequency);
+                    droneSpeed++;
+                },
+                callbackScope: this,
+                loop: true
+            });
 		
         music = this.sound.add(backgroundTheme , config.audio);
         gameoverMusic = this.sound.add('gameover' , config.gameover);
         killMusic = this.sound.add('kill', config.gameover);
-
 
         music.play(config.audio);
 
@@ -590,6 +604,8 @@
 	{
 	    if(debugOn){console.log("Mouse Sector = " + getSectorArea(game.input.mousePointer.x, game.input.mousePointer.y)[0] + " Mouse Area = " + getSectorArea(game.input.mousePointer.x, game.input.mousePointer.y)[1]);};
 
+        //difficulty increase
+        spawnDroneEvent.delay = (Math.random() * 1500 + 5000) / droneSpawnFrequency;
 
 		// sensor placement
         if(pointer.isDown){
