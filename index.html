@@ -27,7 +27,8 @@
             preload: preload,
             create: create,
 			update: update,
-            spawnDrone: spawnDrone
+            spawnDrone: spawnDrone,
+            removeDrone: removeDrone
         },
         audio: {
             mute: false,
@@ -117,6 +118,7 @@
             "Starrflügel: Drohne mit langer Flugzeit, die nicht an einer Stelle schweben kann.",
             "Hybrid: Starrflügel-Drohne, die schweben kann. Lange Flugzeiten und große Präzision."
         ];
+        
 
         //var droneNumber = 0;
 
@@ -163,6 +165,8 @@
         var upgradeDamageButton;
 
         var u; //undefined for displayupdates
+        
+        var thisGame;
     }
 
 
@@ -180,6 +184,7 @@
         {
             this.load.spritesheet('dude_sprite', 'assets/dude.png', {frameWidth: 32, frameHeight: 48});
             this.load.spritesheet('droneSprite', 'assets/droneSprite.png', {frameWidth: 280, frameHeight: 280});
+            this.load.spritesheet('explosionSprite', 'assets/explosionSprite.png', {frameWidth: 56, frameHeight: 56});
         }
 
         // Load Music
@@ -193,7 +198,7 @@
     }
 
     function create () {
-		
+		thisGame = this;
 		
         music = this.sound.add(backgroundTheme , config.audio);
         gameoverMusic = this.sound.add('gameover' , config.gameover);
@@ -440,6 +445,16 @@
             });
         }
         
+        // Explosion animation
+        {
+            this.anims.create({
+                key: 'explode',
+                frames: this.anims.generateFrameNumbers('explosionSprite', {start: 0, end: 5}),
+                frameRate: 20,
+                repeat: 0
+            })
+        }
+        
         gameOverText = this.add.text(0, 0, 'GAME OVER', {fontSize: '32px', fill: '#fff'});
         gameOverText.setBackgroundColor('#000');
         gameOverText.setPadding(halfWidth-gameOverText.width/2, halfHeight-gameOverText.height/2);
@@ -448,13 +463,13 @@
     }
         
     function setDroneProperties(drone){
-        drone.speed = Math.random()*0.1;
+        drone.speed = Math.random()+0.05;
         
         /*
-         * 0 - Multirotor - payload smol
-         * 1 - Single Rotor - payload big
-         * 2 - Starrflügel - payload ?
-         * 3 - Hybrid - payload ?
+         * 0 - Multirotor
+         * 1 - Single Rotor
+         * 2 - Starrflügel
+         * 3 - Hybrid
          */
         drone.type = Math.floor(Math.random()*4);
         
@@ -502,7 +517,7 @@
         
         //richtung stadion. szenengröße beachten (bei geschwindigkeit)!
         var distance = Phaser.Math.Distance.Between(xPosition, yPosition, halfWidth, halfHeight);
-        var speed = droneSpeed*distance*newDrone.speed;
+        var speed = droneSpeed*distance*newDrone.speed*0.1;
         this.physics.moveTo(newDrone, halfWidth, halfHeight, speed);
         
         //hovern für info
@@ -522,6 +537,21 @@
         
         //sensor fängt drohne - brauchen wir nicht, ist aber lustig
         //this.physics.add.overlap(player, newDrone, collisionDroneStadium, null, this);
+    }
+        
+    function removeDrone(drone){
+        var droneExplosion = thisGame.physics.add.sprite(drone.x, drone.y, 'explosionSprite');
+        droneExplosion.anims.play('explode', false);
+        thisGame.time.addEvent({
+                delay: 1000,
+                callback: function(){
+                    droneExplosion.destroy();
+                },
+                callbackScope: this,
+                loop: false
+            });
+        drones.remove(drone);
+        drone.destroy();
     }
         
     function collisionDroneStadium(stadium, drone) {
@@ -553,8 +583,7 @@
         }
 
         updatePlayer(player.coins,player.actionPoints,player.stadium);
-        drones.remove(drone);
-        drone.destroy();
+        removeDrone(drone);
     }
 	
 	function update ()
@@ -586,7 +615,7 @@
                     if(drone.hp <= sensor.properties.damage){
                         if(debugOn){console.log('drone eliminated!!!');}
                         updateDrone(' ',' ',' ',' '); //empty drone display
-                        drone.destroy();
+                        removeDrone(drone);
                         player.coins += drone.reward;
                         updatePlayer(u,player.actionPoints,u);
                         killMusic.play();
