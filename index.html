@@ -222,10 +222,12 @@
             refillStadiumHPButton = this.add.text(halfWidth * 2, sidebarWealthDisplay.y + 40, '3 HP wieder auffüllen (Kostet 100)', {fontFamily: 'Arial'});
             refillStadiumHPButton.setFixedSize(0, 70);
             refillStadiumHPButton.setInteractive({cursor: 'pointer'}).on('pointerdown', function () {
-                stadiumHP += 3;
-                sidebarStadiumHPDisplay.setText("Stadium-HP: " + stadiumHP);
-                wealth -= 100;
-                sidebarWealthDisplay.setText("Vermögen: " + wealth);
+                if(wealth >= 100){
+                    stadiumHP += 3;
+                    sidebarStadiumHPDisplay.setText("Stadium-HP: " + stadiumHP);
+                    wealth -= 100;
+                    sidebarWealthDisplay.setText("Vermögen: " + wealth);
+                }
             })
             refillStadiumHPButton.setBackgroundColor('#333333');
             refillStadiumHPButton.setDepth(101);
@@ -272,7 +274,7 @@
             sidebarDroneRewardDisplay.setDepth(101);
 
             var sidebarDroneInfoDisplayContent = [
-                "This is the first sentence. This is the second sentence, including a very loooooooooooooooooooong word (hence useAdvanceWrap)."
+                ""
             ]
             sidebarDroneInfoDisplay = this.make.text({
                 x: halfWidth * 2,
@@ -529,6 +531,7 @@
                     }else{
                         if(debugOn){console.log('drone damaged!!!');}
                         drone.hp -= sensor.properties.damage;
+                        drone.setTintFill('#ff0000');
                     }
                 }
             });
