@@ -282,29 +282,29 @@
             };
 
             var buttonConfig = {
-                x: window.innerWidth-300,
+                x: window.innerWidth-50,
                 y: 0,
                 text: '+ 1',
                 origin: {x: 0, y: 0},
                 style: {
-                    font: '40px Arial',
+                    font: '30px Arial',
                     color: '#000',
                     wordWrap: {width: config.width * 0.2 - 20, useAdvancedWrap: true},
                     backgroundColor: '#aaaaaa'
                 }
             };
 
-            sidebarTitle = this.make.text(textFieldConfig).setPadding(10).setDepth(101).setText('Drone Wars').setFont('60px Arial');
+            sidebarTitle = this.make.text(textFieldConfig).setPadding(10).setDepth(101).setText('Drone Wars').setFont('50px Arial');
 
             // drone Display
             var droneConfig = textFieldConfig;
             droneConfig.y = halfHeight/6;
 
             var droneTitle = this.make.text(droneConfig).setPadding(10).setDepth(101).setText('Drohne').setFont('50px Arial');
-            var droneHP = this.make.text(droneConfig).setPadding(10).setDepth(101).setText('HP: ').setY(droneTitle.y+80);
+            var droneHP = this.make.text(droneConfig).setPadding(10).setDepth(101).setText('HP: ').setY(droneTitle.y+60);
             var dronePayload = this.make.text(droneConfig).setPadding(10).setDepth(101).setText('Ladung: ').setY(droneHP.y+50);
             var droneReward = this.make.text(droneConfig).setPadding(10).setDepth(101).setText('Belohnung: ').setY(dronePayload.y+50);
-            var droneInfo = this.make.text(droneConfig).setPadding(10).setDepth(101).setText('Info: ').setY(droneReward.y+50).setFont('35px Arial');
+            var droneInfo = this.make.text(droneConfig).setPadding(10).setDepth(101).setText('Info: ').setY(droneReward.y+50).setFont('20px Arial');
 
             droneDisplay = {
                 title: droneTitle,
@@ -319,7 +319,7 @@
             sensorConfig.y = halfHeight;
 
             sensorTitle = this.make.text(sensorConfig).setPadding(10).setDepth(101).setText('Sensor').setFont('50px Arial');
-            sensorType = this.make.text(sensorConfig).setPadding(10).setDepth(101).setText('Typ: ' + sensor.properties.type).setY(sensorTitle.y+80);
+            sensorType = this.make.text(sensorConfig).setPadding(10).setDepth(101).setText('Typ: ' + sensor.properties.type).setY(sensorTitle.y+60);
             sensorRange = this.make.text(sensorConfig).setPadding(10).setDepth(101).setText('Sichtweite: ' + sensor.properties.range).setY(sensorType.y+50);
             sensorDamage = this.make.text(sensorConfig).setPadding(10).setDepth(101).setText('Schaden: ' + sensor.properties.damage).setY(sensorRange.y+50);
 
@@ -335,8 +335,8 @@
             playerConfig.y = halfHeight+halfHeight/2;
 
             playerTitle = this.make.text(playerConfig).setPadding(10).setDepth(101).setText('Spieler').setFont('50px Arial');
-            playerCoins = this.make.text(playerConfig).setPadding(10).setDepth(101).setText('Vermögen: ' + player.coins).setY(playerTitle.y+80);
-            playerPoints = this.make.text(playerConfig).setPadding(10).setDepth(101).setText('Aktionspunkte: ' + player.actionPoints).setY(playerCoins.y+50);
+            playerCoins = this.make.text(playerConfig).setPadding(10).setDepth(101).setText('Vermögen: ' + player.coins).setY(playerTitle.y+60);
+            playerPoints = this.make.text(playerConfig).setPadding(10).setDepth(101).setText('AP: ' + player.actionPoints).setY(playerCoins.y+50);
             playerStadium = this.make.text(playerConfig).setPadding(10).setDepth(101).setText('Stadion: ' + player.stadium).setY(playerPoints.y+50);
 
             playerDisplay = {
@@ -774,7 +774,7 @@
 
     function updatePlayer(coins, points, stadium){
         if (coins) playerDisplay.coins.setText("Vermögen: " + coins);
-        if (points) playerDisplay.points.setText("Aktionspunkte: " + points);
+        if (points) playerDisplay.points.setText("AP: " + points);
         if (stadium) playerDisplay.stadium.setText("Stadion: " + stadium);
     }
 
