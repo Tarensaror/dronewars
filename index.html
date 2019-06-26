@@ -105,9 +105,6 @@
 
         var refillStadiumHPButton;
 
-        var stadiumHP = 100;
-        var wealth = 500;
-
         var drones;
 
         var droneSpawnFrequency = 1;
@@ -170,6 +167,7 @@
         var u; //undefined for displayupdates
         
         var thisGame;
+        var fontSize = halfHeight/25;
     }
 
 
@@ -225,7 +223,7 @@
 
         // player init
         player.actionPoints = 100;
-        player.coins = 1000;
+        player.coins = 0;
         player.stadium = 100;
 
         // stadium
@@ -273,36 +271,38 @@
                 text: '',
                 origin: {x: 0, y: 0},
                 style: {
-                    font: '40px Arial',
+                    fontFamily: 'Arial',
+                    fontSize: fontSize,
                     color: '#000',
                     wordWrap: {width: config.width * 0.2 - 20, useAdvancedWrap: true}
                 }
             };
 
             var buttonConfig = {
-                x: window.innerWidth-50,
+                x: window.innerWidth-fontSize*2,
                 y: 0,
                 text: '+ 1',
                 origin: {x: 0, y: 0},
                 style: {
-                    font: '30px Arial',
+                    fontFamily: 'Arial',
+                    fontSize: fontSize*0.9,
+                    border: '1px black solid',
                     color: '#000',
-                    wordWrap: {width: config.width * 0.2 - 20, useAdvancedWrap: true},
                     backgroundColor: '#aaaaaa'
                 }
             };
 
-            sidebarTitle = this.make.text(textFieldConfig).setPadding(10).setDepth(101).setText('Drone Wars').setFont('50px Arial');
+            sidebarTitle = this.make.text(textFieldConfig).setPadding(fontSize/2).setDepth(101).setText('Drone Wars').setFont('Arial').setFontSize(fontSize*2);
 
             // drone Display
             var droneConfig = textFieldConfig;
-            droneConfig.y = halfHeight/6;
+            droneConfig.y = sidebarTitle.height+fontSize;
 
-            var droneTitle = this.make.text(droneConfig).setPadding(10).setDepth(101).setText('Drohne').setFont('50px Arial');
-            var droneHP = this.make.text(droneConfig).setPadding(10).setDepth(101).setText('HP: ').setY(droneTitle.y+60);
-            var dronePayload = this.make.text(droneConfig).setPadding(10).setDepth(101).setText('Ladung: ').setY(droneHP.y+50);
-            var droneReward = this.make.text(droneConfig).setPadding(10).setDepth(101).setText('Belohnung: ').setY(dronePayload.y+50);
-            var droneInfo = this.make.text(droneConfig).setPadding(10).setDepth(101).setText('Info: ').setY(droneReward.y+50).setFont('20px Arial');
+            var droneTitle = this.make.text(droneConfig).setPadding(fontSize*0.3).setDepth(101).setText('Drohne').setFont('Arial').setFontSize(fontSize*1.3);
+            var droneHP = this.make.text(droneConfig).setPadding(fontSize*0.3).setDepth(101).setText('HP: ').setY(droneTitle.y+droneTitle.height);
+            var dronePayload = this.make.text(droneConfig).setPadding(fontSize*0.3).setDepth(101).setText('Ladung: ').setY(droneHP.y+droneHP.height);
+            var droneReward = this.make.text(droneConfig).setPadding(fontSize*0.3).setDepth(101).setText('Belohnung: ').setY(dronePayload.y+dronePayload.height);
+            var droneInfo = this.make.text(droneConfig).setPadding(fontSize*0.3).setDepth(101).setText('Info: ').setY(droneReward.y+droneReward.height).setFontSize(fontSize*0.9);
 
             droneDisplay = {
                 title: droneTitle,
@@ -314,12 +314,12 @@
 
             // Sensor Display
             var sensorConfig = textFieldConfig;
-            sensorConfig.y = halfHeight;
+            sensorConfig.y = droneConfig.y+18*fontSize;
 
-            sensorTitle = this.make.text(sensorConfig).setPadding(10).setDepth(101).setText('Sensor').setFont('50px Arial');
-            sensorType = this.make.text(sensorConfig).setPadding(10).setDepth(101).setText('Typ: ' + sensor.properties.type).setY(sensorTitle.y+60);
-            sensorRange = this.make.text(sensorConfig).setPadding(10).setDepth(101).setText('Sichtweite: ' + sensor.properties.range).setY(sensorType.y+50);
-            sensorDamage = this.make.text(sensorConfig).setPadding(10).setDepth(101).setText('Schaden: ' + sensor.properties.damage).setY(sensorRange.y+50);
+            sensorTitle = this.make.text(sensorConfig).setPadding(fontSize*0.3).setDepth(101).setText('Sensor').setFont('Arial').setFontSize(fontSize*1.3);
+            sensorType = this.make.text(sensorConfig).setPadding(fontSize*0.3).setDepth(101).setText('Typ: ' + sensor.properties.type).setY(sensorTitle.y+sensorTitle.height);
+            sensorRange = this.make.text(sensorConfig).setPadding(fontSize*0.3).setDepth(101).setText('Sichtweite: ' + sensor.properties.range).setY(sensorType.y+sensorType.height);
+            sensorDamage = this.make.text(sensorConfig).setPadding(fontSize*0.3).setDepth(101).setText('Schaden: ' + sensor.properties.damage).setY(sensorRange.y+sensorRange.height);
 
             sensorDisplay = {
                 title: sensorTitle,
@@ -330,12 +330,12 @@
 
             // Player Display
             var playerConfig = textFieldConfig;
-            playerConfig.y = halfHeight+halfHeight/2;
+            playerConfig.y = sensorDamage.y+sensorDamage.height+fontSize;
 
-            playerTitle = this.make.text(playerConfig).setPadding(10).setDepth(101).setText('Spieler').setFont('50px Arial');
-            playerCoins = this.make.text(playerConfig).setPadding(10).setDepth(101).setText('Vermögen: ' + player.coins).setY(playerTitle.y+60);
-            playerPoints = this.make.text(playerConfig).setPadding(10).setDepth(101).setText('AP: ' + player.actionPoints).setY(playerCoins.y+50);
-            playerStadium = this.make.text(playerConfig).setPadding(10).setDepth(101).setText('Stadion: ' + player.stadium).setY(playerPoints.y+50);
+            playerTitle = this.make.text(playerConfig).setPadding(fontSize*0.3).setDepth(101).setText('Spieler').setFont('Arial').setFontSize(fontSize*1.3);
+            playerCoins = this.make.text(playerConfig).setPadding(fontSize*0.3).setDepth(101).setText('Vermögen: ' + player.coins).setY(playerTitle.y+playerTitle.height);
+            playerPoints = this.make.text(playerConfig).setPadding(fontSize*0.3).setDepth(101).setText('AP: ' + player.actionPoints).setY(playerCoins.y+playerCoins.height);
+            playerStadium = this.make.text(playerConfig).setPadding(fontSize*0.3).setDepth(101).setText('Stadion: ' + player.stadium).setY(playerPoints.y+playerPoints.height);
 
             playerDisplay = {
                 title: playerTitle,
@@ -345,25 +345,35 @@
             };
 
             // Upgrade buttons
-            upgradeRangeButton = this.make.text(buttonConfig).setPadding(10).setDepth(101)
-                .setY(sensorType.y+50)
+            upgradeRangeButton = this.make.text(buttonConfig).setPadding(fontSize*0.3).setDepth(101)
+                .setY(sensorRange.y)
                 .setInteractive({cursor: 'pointer'}).on('pointerdown', function (){
-                    if(player.coins >= 0 && sensor.properties.range < 3){
+                    if(player.coins >= 1000 && sensor.properties.range < 3){
                         sensor.properties.range++;
-                        player.coins -= 100;
+                        player.coins -= 1000;
                         updateSensor(u,sensor.properties.range,u);
-                        updatePlayer(player.coins,u);
+                        updatePlayer(player.coins, u, u);
                     }
                 });
 
-            upgradeDamageButton = this.make.text(buttonConfig).setPadding(10).setDepth(101)
-                .setY(sensorRange.y+50)
+            upgradeDamageButton = this.make.text(buttonConfig).setPadding(fontSize*0.3).setDepth(101)
+                .setY(sensorDamage.y)
                 .setInteractive({cursor: 'pointer'}).on('pointerdown', function (){
-                    if(player.coins >= 0 && sensor.properties.damage < 10){
+                    if(player.coins >= 300 && sensor.properties.damage < 10){
                         sensor.properties.damage++;
-                        player.coins -= 100;
+                        player.coins -= 300;
                         updateSensor(u,u,sensor.properties.damage);
-                        updatePlayer(u,player.coins);
+                        updatePlayer(player.coins, u, u);
+                    }
+                });
+
+            increaseStadiumHPButton = this.make.text(buttonConfig).setPadding(fontSize*0.3).setDepth(101)
+                .setY(playerStadium.y)
+                .setInteractive({cursor: 'pointer'}).on('pointerdown', function (){
+                    if(player.coins >= 100){
+                        player.stadium+=5;
+                        player.coins -= 100;
+                        updatePlayer(player.coins, u, player.stadium);
                     }
                 });
         }
