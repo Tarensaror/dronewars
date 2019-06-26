@@ -288,11 +288,28 @@
                     fontSize: fontSize*0.9,
                     border: '1px black solid',
                     color: '#000',
-                    backgroundColor: '#aaaaaa'
+                    backgroundColor: '#cccccc'
                 }
             };
+            
+            
+            muteButton = this.make.text(buttonConfig).setPadding(fontSize*0.3).setDepth(101)
+                .setY(0)
+                .setX(halfWidth*2)
+                .setText('Ton aus');
+            muteButton.setInteractive({cursor: 'pointer'}).on('pointerdown', function (){
+                    if(music.mute){
+                        music.mute = false;
+                        muteButton.setText('Ton aus');
+                    } else {
+                        music.mute = true;
+                        muteButton.setText('Ton an');
+                    }
+                });
 
-            sidebarTitle = this.make.text(textFieldConfig).setPadding(fontSize/2).setDepth(101).setText('Drone Wars').setFont('Arial').setFontSize(fontSize*2);
+            sidebarTitle = this.make.text(textFieldConfig).setPadding(fontSize/2).setDepth(101).setText('Drone Wars').setFont('Arial').setFontSize(fontSize*2).setY(muteButton.height);
+            
+            
 
             // drone Display
             var droneConfig = textFieldConfig;
@@ -595,7 +612,9 @@
             if(trigger) {
                 trigger = false;
                 music.pause();
-                gameoverMusic.play();
+                if(!music.mute){
+                    gameoverMusic.play();
+                }
             };
 
             this.time.addEvent({
@@ -654,7 +673,9 @@
                         removeDrone(drone);
                         player.coins += drone.reward;
                         updatePlayer(u,player.actionPoints,u);
-                        killMusic.play();
+                        if(!music.mute){
+                            killMusic.play();
+                        }
                     }else{
                         if(debugOn){console.log('drone damaged!!!');}
                         drone.hp -= sensor.properties.damage;
@@ -780,7 +801,9 @@
     }
         
     function gameOver(){
-            gameoverMusic.pause();
+            if(!music.mute){
+                gameoverMusic.pause();
+            }
             gameOverText.setVisible(true);
             game.scene.pause("default");
     }
