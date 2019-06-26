@@ -206,9 +206,8 @@
                 delay: 1000*60*difficultyPeriodInMinutes,
                 callback: function(){
                     difficulty++;
-                    droneSpawnFrequency+=10;
-                    console.log(droneSpawnFrequency);
-                    droneSpeed++;
+                    droneSpawnFrequency*=1.3;
+                    droneSpeed*=1.1;
                 },
                 callbackScope: this,
                 loop: true
