@@ -1,7 +1,7 @@
-<!doctype html> 
-<html lang="en"> 
-<head> 
-    <meta charset="UTF-8" />
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
     <title>Drone-Wars</title>
     <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
     <style type="text/css">
@@ -11,22 +11,22 @@
     </style>
 </head>
 <body>
-    <script>
+<script>
     var config = {
         type: Phaser.AUTO,
         width: window.innerWidth,
         height: window.innerHeight,
-	    physics: {
+        physics: {
             default: 'arcade',
             arcade: {
-                gravity: { x: 0, y:0 },
+                gravity: {x: 0, y: 0},
                 debug: false
             }
         },
         scene: {
             preload: preload,
             create: create,
-			update: update,
+            update: update,
             spawnDrone: spawnDrone,
             removeDrone: removeDrone
         },
@@ -54,7 +54,7 @@
     // globals
     {
         var game = new Phaser.Game(config);
-        
+
         var difficulty = 1;
         var difficultyPeriodInMinutes = 3;
 
@@ -69,12 +69,12 @@
 
         var oneOutOfEightX = halfWidth / 4;
         var oneOutOfEightY = halfHeight / 4;
-        
+
         var pointer;
         var player = {};
         var stadium;
-		var sensor;
-		var sensorTypes = ['Adler','LMG','Netz','EMP'];
+        var sensor;
+        var sensorTypes = ['Adler', 'LMG', 'Netz', 'EMP'];
 
         var sectorA = [];
         var sectorB = [];
@@ -118,13 +118,13 @@
             "Starrflügel: Drohne mit langer Flugzeit, die nicht an einer Stelle schweben kann.",
             "Hybrid: Starrflügel-Drohne, die schweben kann. Lange Flugzeiten und große Präzision."
         ];
-        
+
 
         //var droneNumber = 0;
 
         var overlay;
-		var sensorOverlay;
-		
+        var sensorOverlay;
+
         var oldSector;
         var oldArea;
 
@@ -165,14 +165,13 @@
         var upgradeDamageButton;
 
         var u; //undefined for displayupdates
-        
+
         var thisGame;
-        var fontSize = halfHeight/25;
+        var fontSize = halfHeight / 25;
     }
 
 
-    function preload ()
-    {
+    function preload() {
         // Load images
         {
             this.load.image('map', 'assets/map.png');
@@ -184,7 +183,7 @@
         {
             this.load.spritesheet('droneSprite', 'assets/droneSprite.png', {frameWidth: 280, frameHeight: 280});
             this.load.spritesheet('explosionSprite', 'assets/explosionSprite.png', {frameWidth: 56, frameHeight: 56});
-            this.load.spritesheet('sensorSprite', 'assets/player_new.png', {frameWidth: 32 , frameHeight: 32});
+            this.load.spritesheet('sensorSprite', 'assets/player_new.png', {frameWidth: 32, frameHeight: 32});
         }
 
         // Load Music
@@ -197,22 +196,43 @@
 
     }
 
-    function create () {
-		thisGame = this;
-        
+    function create() {
+        thisGame = this;
+
         this.time.addEvent({
-                delay: 1000*60*difficultyPeriodInMinutes,
-                callback: function(){
-                    difficulty++;
-                    droneSpawnFrequency*=1.3;
-                    droneSpeed*=1.1;
-                },
-                callbackScope: this,
-                loop: true
-            });
-		
-        music = this.sound.add(backgroundTheme , config.audio);
-        gameoverMusic = this.sound.add('gameover' , config.gameover);
+            delay: 1000 * 60 * difficultyPeriodInMinutes,
+            callback: function () {
+                difficulty++;
+                droneSpawnFrequency *= 1.3;
+                droneSpeed *= 1.1;
+            },
+            callbackScope: this,
+            loop: true
+        });
+
+        this.input.on('pointerdown', function (pointer) {
+            if (player.actionPoints > 0) {
+                var sec = getSectorArea(pointer.x, pointer.y);
+
+                if (pointer.x < window.innerWidth - window.innerWidth * 0.2) {
+                    if(sensor.sector !== sec[0])
+                        updatePlayer(u, --player.actionPoints, u);
+
+                    var t = sectors[sec[0]][0];
+                    var highSector = graphs[sceneGraphics.indexOf(t)];
+                    var endPoint = highSector.curves[2].p1;
+
+                    sensor.x = highSector.startPoint.x - ((highSector.startPoint.x - endPoint.x) / 2);
+                    sensor.y = highSector.startPoint.y - ((highSector.startPoint.y - endPoint.y) / 2);
+                    sensor.posChange = true;
+                    sensor.sector = sec[0];
+                }
+            }
+        });
+
+
+        music = this.sound.add(backgroundTheme, config.audio);
+        gameoverMusic = this.sound.add('gameover', config.gameover);
         killMusic = this.sound.add('kill', config.gameover);
 
         music.play(config.audio);
@@ -237,10 +257,10 @@
         {
             sensor = this.physics.add.sprite(halfWidth, halfHeight, 'sensorSprite').setScale(1);
             sensor.setDepth(10);
-			sensor.range = 2;
-			sensor.posChange = false;
-			sensor.properties = {
-			    type: sensorTypes[Math.floor(Math.random() * (3 -1 + 1) + 1)],
+            sensor.range = 2;
+            sensor.posChange = false;
+            sensor.properties = {
+                type: sensorTypes[Math.floor(Math.random() * (3 - 1 + 1) + 1)],
                 range: Math.floor(Math.random() * (3 - 1 + 1) + 1),
                 damage: Math.floor(Math.random() * (5 - 1 + 1) + 1)
             }
@@ -279,47 +299,46 @@
             };
 
             var buttonConfig = {
-                x: window.innerWidth-fontSize*2,
+                x: window.innerWidth - fontSize * 2,
                 y: 0,
                 text: '+ 1',
                 origin: {x: 0, y: 0},
                 style: {
                     fontFamily: 'Arial',
-                    fontSize: fontSize*0.9,
+                    fontSize: fontSize * 0.9,
                     border: '1px black solid',
                     color: '#000',
                     backgroundColor: '#cccccc'
                 }
             };
-            
-            
-            muteButton = this.make.text(buttonConfig).setPadding(fontSize*0.3).setDepth(101)
-                .setY(0)
-                .setX(halfWidth*2)
-                .setText('Ton aus');
-            muteButton.setInteractive({cursor: 'pointer'}).on('pointerdown', function (){
-                    if(music.mute){
-                        music.mute = false;
-                        muteButton.setText('Ton aus');
-                    } else {
-                        music.mute = true;
-                        muteButton.setText('Ton an');
-                    }
-                });
 
-            sidebarTitle = this.make.text(textFieldConfig).setPadding(fontSize/2).setDepth(101).setText('Drone Wars').setFont('Arial').setFontSize(fontSize*2).setY(muteButton.height);
-            
-            
+
+            muteButton = this.make.text(buttonConfig).setPadding(fontSize * 0.3).setDepth(101)
+                .setY(0)
+                .setX(halfWidth * 2)
+                .setText('Ton aus');
+            muteButton.setInteractive({cursor: 'pointer'}).on('pointerdown', function () {
+                if (music.mute) {
+                    music.mute = false;
+                    muteButton.setText('Ton aus');
+                } else {
+                    music.mute = true;
+                    muteButton.setText('Ton an');
+                }
+            });
+
+            sidebarTitle = this.make.text(textFieldConfig).setPadding(fontSize / 2).setDepth(101).setText('Drone Wars').setFont('Arial').setFontSize(fontSize * 2).setY(muteButton.height);
+
 
             // drone Display
             var droneConfig = textFieldConfig;
-            droneConfig.y = sidebarTitle.height+fontSize;
+            droneConfig.y = sidebarTitle.height + fontSize;
 
-            var droneTitle = this.make.text(droneConfig).setPadding(fontSize*0.3).setDepth(101).setText('Drohne').setFont('Arial').setFontSize(fontSize*1.3);
-            var droneHP = this.make.text(droneConfig).setPadding(fontSize*0.3).setDepth(101).setText('HP: ').setY(droneTitle.y+droneTitle.height);
-            var dronePayload = this.make.text(droneConfig).setPadding(fontSize*0.3).setDepth(101).setText('Ladung: ').setY(droneHP.y+droneHP.height);
-            var droneReward = this.make.text(droneConfig).setPadding(fontSize*0.3).setDepth(101).setText('Belohnung: ').setY(dronePayload.y+dronePayload.height);
-            var droneInfo = this.make.text(droneConfig).setPadding(fontSize*0.3).setDepth(101).setText('Info: ').setY(droneReward.y+droneReward.height).setFontSize(fontSize*0.9);
+            var droneTitle = this.make.text(droneConfig).setPadding(fontSize * 0.3).setDepth(101).setText('Drohne').setFont('Arial').setFontSize(fontSize * 1.3);
+            var droneHP = this.make.text(droneConfig).setPadding(fontSize * 0.3).setDepth(101).setText('HP: ').setY(droneTitle.y + droneTitle.height);
+            var dronePayload = this.make.text(droneConfig).setPadding(fontSize * 0.3).setDepth(101).setText('Ladung: ').setY(droneHP.y + droneHP.height);
+            var droneReward = this.make.text(droneConfig).setPadding(fontSize * 0.3).setDepth(101).setText('Belohnung: ').setY(dronePayload.y + dronePayload.height);
+            var droneInfo = this.make.text(droneConfig).setPadding(fontSize * 0.3).setDepth(101).setText('Info: ').setY(droneReward.y + droneReward.height).setFontSize(fontSize * 0.9);
 
             droneDisplay = {
                 title: droneTitle,
@@ -331,12 +350,12 @@
 
             // Sensor Display
             var sensorConfig = textFieldConfig;
-            sensorConfig.y = droneConfig.y+18*fontSize;
+            sensorConfig.y = droneConfig.y + 18 * fontSize;
 
-            sensorTitle = this.make.text(sensorConfig).setPadding(fontSize*0.3).setDepth(101).setText('Sensor').setFont('Arial').setFontSize(fontSize*1.3);
-            sensorType = this.make.text(sensorConfig).setPadding(fontSize*0.3).setDepth(101).setText('Typ: ' + sensor.properties.type).setY(sensorTitle.y+sensorTitle.height);
-            sensorRange = this.make.text(sensorConfig).setPadding(fontSize*0.3).setDepth(101).setText('Sichtweite: ' + sensor.properties.range).setY(sensorType.y+sensorType.height);
-            sensorDamage = this.make.text(sensorConfig).setPadding(fontSize*0.3).setDepth(101).setText('Schaden: ' + sensor.properties.damage).setY(sensorRange.y+sensorRange.height);
+            sensorTitle = this.make.text(sensorConfig).setPadding(fontSize * 0.3).setDepth(101).setText('Sensor').setFont('Arial').setFontSize(fontSize * 1.3);
+            sensorType = this.make.text(sensorConfig).setPadding(fontSize * 0.3).setDepth(101).setText('Typ: ' + sensor.properties.type).setY(sensorTitle.y + sensorTitle.height);
+            sensorRange = this.make.text(sensorConfig).setPadding(fontSize * 0.3).setDepth(101).setText('Sichtweite: ' + sensor.properties.range).setY(sensorType.y + sensorType.height);
+            sensorDamage = this.make.text(sensorConfig).setPadding(fontSize * 0.3).setDepth(101).setText('Schaden: ' + sensor.properties.damage).setY(sensorRange.y + sensorRange.height);
 
             sensorDisplay = {
                 title: sensorTitle,
@@ -347,12 +366,12 @@
 
             // Player Display
             var playerConfig = textFieldConfig;
-            playerConfig.y = sensorDamage.y+sensorDamage.height+fontSize;
+            playerConfig.y = sensorDamage.y + sensorDamage.height + fontSize;
 
-            playerTitle = this.make.text(playerConfig).setPadding(fontSize*0.3).setDepth(101).setText('Spieler').setFont('Arial').setFontSize(fontSize*1.3);
-            playerCoins = this.make.text(playerConfig).setPadding(fontSize*0.3).setDepth(101).setText('Vermögen: ' + player.coins).setY(playerTitle.y+playerTitle.height);
-            playerPoints = this.make.text(playerConfig).setPadding(fontSize*0.3).setDepth(101).setText('AP: ' + player.actionPoints).setY(playerCoins.y+playerCoins.height);
-            playerStadium = this.make.text(playerConfig).setPadding(fontSize*0.3).setDepth(101).setText('Stadion: ' + player.stadium).setY(playerPoints.y+playerPoints.height);
+            playerTitle = this.make.text(playerConfig).setPadding(fontSize * 0.3).setDepth(101).setText('Spieler').setFont('Arial').setFontSize(fontSize * 1.3);
+            playerCoins = this.make.text(playerConfig).setPadding(fontSize * 0.3).setDepth(101).setText('Vermögen: ' + player.coins).setY(playerTitle.y + playerTitle.height);
+            playerPoints = this.make.text(playerConfig).setPadding(fontSize * 0.3).setDepth(101).setText('AP: ' + player.actionPoints).setY(playerCoins.y + playerCoins.height);
+            playerStadium = this.make.text(playerConfig).setPadding(fontSize * 0.3).setDepth(101).setText('Stadion: ' + player.stadium).setY(playerPoints.y + playerPoints.height);
 
             playerDisplay = {
                 title: playerTitle,
@@ -362,33 +381,33 @@
             };
 
             // Upgrade buttons
-            upgradeRangeButton = this.make.text(buttonConfig).setPadding(fontSize*0.3).setDepth(101)
+            upgradeRangeButton = this.make.text(buttonConfig).setPadding(fontSize * 0.3).setDepth(101)
                 .setY(sensorRange.y)
-                .setInteractive({cursor: 'pointer'}).on('pointerdown', function (){
-                    if(player.coins >= 1000 && sensor.properties.range < 3){
+                .setInteractive({cursor: 'pointer'}).on('pointerdown', function () {
+                    if (player.coins >= 1000 && sensor.properties.range < 3) {
                         sensor.properties.range++;
                         player.coins -= 1000;
-                        updateSensor(u,sensor.properties.range,u);
+                        updateSensor(u, sensor.properties.range, u);
                         updatePlayer(player.coins, u, u);
                     }
                 });
 
-            upgradeDamageButton = this.make.text(buttonConfig).setPadding(fontSize*0.3).setDepth(101)
+            upgradeDamageButton = this.make.text(buttonConfig).setPadding(fontSize * 0.3).setDepth(101)
                 .setY(sensorDamage.y)
-                .setInteractive({cursor: 'pointer'}).on('pointerdown', function (){
-                    if(player.coins >= 300 && sensor.properties.damage < 10){
+                .setInteractive({cursor: 'pointer'}).on('pointerdown', function () {
+                    if (player.coins >= 300 && sensor.properties.damage < 10) {
                         sensor.properties.damage++;
                         player.coins -= 300;
-                        updateSensor(u,u,sensor.properties.damage);
+                        updateSensor(u, u, sensor.properties.damage);
                         updatePlayer(player.coins, u, u);
                     }
                 });
 
-            increaseStadiumHPButton = this.make.text(buttonConfig).setPadding(fontSize*0.3).setDepth(101)
+            increaseStadiumHPButton = this.make.text(buttonConfig).setPadding(fontSize * 0.3).setDepth(101)
                 .setY(playerStadium.y)
-                .setInteractive({cursor: 'pointer'}).on('pointerdown', function (){
-                    if(player.coins >= 100){
-                        player.stadium+=5;
+                .setInteractive({cursor: 'pointer'}).on('pointerdown', function () {
+                    if (player.coins >= 100) {
+                        player.stadium += 5;
                         player.coins -= 100;
                         updatePlayer(player.coins, u, player.stadium);
                     }
@@ -451,8 +470,8 @@
         {
             sceneGraphics[sceneGraphics.length] = this.add.graphics(0, 0);
             overlay = sceneGraphics[sceneGraphics.length - 1];
-			sceneGraphics[sceneGraphics.length] = this.add.graphics(0, 0);
-			sensorOverlay = sceneGraphics[sceneGraphics.length - 1];
+            sceneGraphics[sceneGraphics.length] = this.add.graphics(0, 0);
+            sensorOverlay = sceneGraphics[sceneGraphics.length - 1];
 
             sectors[0] = sectorA;
             sectors[1] = sectorB;
@@ -483,7 +502,7 @@
                 repeat: -1
             });
         }
-        
+
         // Explosion animation
         {
             this.anims.create({
@@ -503,30 +522,30 @@
                 repeat: -1
             })
         }
-        
+
         gameOverText = this.add.text(0, 0, 'GAME OVER', {fontSize: '32px', fill: '#fff'});
         gameOverText.setBackgroundColor('#000');
-        gameOverText.setPadding(halfWidth-gameOverText.width/2, halfHeight-gameOverText.height/2);
+        gameOverText.setPadding(halfWidth - gameOverText.width / 2, halfHeight - gameOverText.height / 2);
         gameOverText.setDepth(200);
         gameOverText.setVisible(false);
 
         sensor.anims.play('move', false);
     }
-        
-    function setDroneProperties(drone){
-        drone.speed = Math.random()+0.05;
-        
+
+    function setDroneProperties(drone) {
+        drone.speed = Math.random() + 0.05;
+
         /*
          * 0 - Multirotor
          * 1 - Single Rotor
          * 2 - Starrflügel
          * 3 - Hybrid
          */
-        drone.type = Math.floor(Math.random()*4);
-        
-        drone.hp = Math.floor(Math.random()*4)+1+drone.type;
+        drone.type = Math.floor(Math.random() * 4);
+
+        drone.hp = Math.floor(Math.random() * 4) + 1 + drone.type;
         var payloadBonus;
-        switch(drone.type){
+        switch (drone.type) {
             case 0:
                 payloadBonus = 0;
                 break;
@@ -539,83 +558,83 @@
             case 3:
                 payloadBonus = 1;
         }
-        drone.payload = Math.floor(Math.random()*4)+payloadBonus;
-        
-        drone.reward = Math.floor(Math.random()*5)*100*drone.payload;
+        drone.payload = Math.floor(Math.random() * 4) + payloadBonus;
+
+        drone.reward = Math.floor(Math.random() * 5) * 100 * drone.payload;
     }
-        
+
     function spawnDrone() {
         //außerhalb vom bildschirm
-        var xPosition = (Math.random()*(halfWidth*2+400))-200;
-        var yPosition =0;
-        if(xPosition < 0 || xPosition > halfWidth*2){
-            yPosition = Math.random()*config.height;
+        var xPosition = (Math.random() * (halfWidth * 2 + 400)) - 200;
+        var yPosition = 0;
+        if (xPosition < 0 || xPosition > halfWidth * 2) {
+            yPosition = Math.random() * config.height;
         } else {
-            if((Math.random())>0.5){
-                yPosition = Math.random()*200-200;
+            if ((Math.random()) > 0.5) {
+                yPosition = Math.random() * 200 - 200;
             } else {
-                yPosition = Math.random()*200+config.height;
+                yPosition = Math.random() * 200 + config.height;
             }
         }
-        
+
         var newDrone = (this.physics.add.sprite(xPosition, yPosition, 'droneSprite').setScale(0.2)).setInteractive();
         newDrone.setDepth(20);
-        
+
         setDroneProperties(newDrone);
-        
+
         drones.add(newDrone);
         this.physics.add.overlap(stadium, drones, collisionDroneStadium, null, this);
-        
+
         //richtung stadion. szenengröße beachten (bei geschwindigkeit)!
         var distance = Phaser.Math.Distance.Between(xPosition, yPosition, halfWidth, halfHeight);
-        var speed = droneSpeed*distance*newDrone.speed*0.1;
+        var speed = droneSpeed * distance * newDrone.speed * 0.1;
         this.physics.moveTo(newDrone, halfWidth, halfHeight, speed);
-        
+
         //hovern für info
-        newDrone.on('pointerover', function(){
-            if(player.actionPoints > 0) {
-                updateDrone(newDrone.hp,newDrone.payload,newDrone.reward, droneInfo[newDrone.type]);
-                player.actionPoints--;
-                updatePlayer(u,player.actionPoints,u)
-            }else{
-                updateDrone('','','', 'keine Informationen sichtbar');
+        newDrone.on('pointerover', function () {
+            if (player.actionPoints > 0) {
+                updateDrone(newDrone.hp, newDrone.payload, newDrone.reward, droneInfo[newDrone.type]);
+                updatePlayer(u, --player.actionPoints, u)
+            } else {
+                updateDrone('', '', '', 'keine Informationen sichtbar');
             }
         });
-        
+
         //Drohnennummer reinschreiben:
         /*sidebarDroneInfoDisplay.setText(droneNumber);
         droneNumber++;*/
-        
+
         //sensor fängt drohne - brauchen wir nicht, ist aber lustig
         //this.physics.add.overlap(player, newDrone, collisionDroneStadium, null, this);
     }
-        
-    function removeDrone(drone){
+
+    function removeDrone(drone) {
         var droneExplosion = thisGame.physics.add.sprite(drone.x, drone.y, 'explosionSprite');
         droneExplosion.anims.play('explode', false);
         thisGame.time.addEvent({
-                delay: 1000,
-                callback: function(){
-                    droneExplosion.destroy();
-                },
-                callbackScope: this,
-                loop: false
-            });
+            delay: 1000,
+            callback: function () {
+                droneExplosion.destroy();
+            },
+            callbackScope: this,
+            loop: false
+        });
         drones.remove(drone);
         drone.destroy();
     }
-        
+
     function collisionDroneStadium(stadium, drone) {
         player.stadium -= drone.payload;
-        if(player.stadium <= 0){
+        if (player.stadium <= 0) {
 
-            if(trigger) {
+            if (trigger) {
                 trigger = false;
                 music.pause();
-                if(!music.mute){
+                if (!music.mute) {
                     gameoverMusic.play();
                 }
-            };
+            }
+            ;
 
             this.time.addEvent({
                 delay: 1800,
@@ -625,96 +644,89 @@
             });
         }
 
-        if(player.stadium <= 75){
+        if (player.stadium <= 75) {
             music.rate = 1.1;
         }
-        if(player.stadium <= 50){
+        if (player.stadium <= 50) {
             music.rate = 1.3;
         }
-        if(player.stadium <= 25){
+        if (player.stadium <= 25) {
             music.rate = 1.5;
         }
 
-        updatePlayer(player.coins,player.actionPoints,player.stadium);
+        updatePlayer(u, u, player.stadium);
         removeDrone(drone);
     }
-	
-	function update ()
-	{
-	    if(debugOn){console.log("Mouse Sector = " + getSectorArea(game.input.mousePointer.x, game.input.mousePointer.y)[0] + " Mouse Area = " + getSectorArea(game.input.mousePointer.x, game.input.mousePointer.y)[1]);};
+
+    function update() {
+        if (debugOn) {
+            console.log("Mouse Sector = " + getSectorArea(game.input.mousePointer.x, game.input.mousePointer.y)[0] + " Mouse Area = " + getSectorArea(game.input.mousePointer.x, game.input.mousePointer.y)[1]);
+        }
+        ;
 
         //difficulty increase
         spawnDroneEvent.delay = (Math.random() * 1500 + 5000) / droneSpawnFrequency;
 
-		// sensor placement
-        if(pointer.isDown){
-            var sec = getSectorArea(pointer.x, pointer.y);
-
-            var t = sectors[sec[0]][0];
-            var highSector = graphs[sceneGraphics.indexOf(t)];
-            var endPoint = highSector.curves[2].p1;
-
-            sensor.x = highSector.startPoint.x - ((highSector.startPoint.x - endPoint.x) / 2);
-            sensor.y = highSector.startPoint.y - ((highSector.startPoint.y - endPoint.y) / 2);
-            sensor.posChange = true;
-            sensor.sector = sec[0];
-            player.actionPoints--;
-        }
-
         // catch drones
         if (Phaser.Input.Keyboard.JustDown(spaceKey)) {
             let dronesArray = drones.children.entries;
-            dronesArray.forEach(function(drone){
+            dronesArray.forEach(function (drone) {
                 let s = getSectorArea(drone.x, drone.y);
-                if( !s[3] && s[0] === sensor.sector && s[1] <= (sensor.properties.range-1)){
-                    if(drone.hp <= sensor.properties.damage){
-                        if(debugOn){console.log('drone eliminated!!!');}
-                        updateDrone(' ',' ',' ',' '); //empty drone display
+                if (!s[3] && s[0] === sensor.sector && s[1] <= (sensor.properties.range - 1)) {
+                    if (drone.hp <= sensor.properties.damage) {
+                        if (debugOn) {
+                            console.log('drone eliminated!!!');
+                        }
+                        updateDrone(' ', ' ', ' ', ' '); //empty drone display
                         removeDrone(drone);
                         player.coins += drone.reward;
-                        updatePlayer(u,player.actionPoints,u);
-                        if(!music.mute){
+                        updatePlayer(player.coins, u, u);
+                        if (!music.mute) {
                             killMusic.play();
                         }
-                    }else{
-                        if(debugOn){console.log('drone damaged!!!');}
+                    } else {
+                        if (debugOn) {
+                            console.log('drone damaged!!!');
+                        }
                         drone.hp -= sensor.properties.damage;
                         drone.setTint(0xff0000);
-                        if(player.actionPoints > 0)
-                            updateDrone(drone.hp,u,u,u);
+                        if (player.actionPoints > 0) {
+                            updateDrone(drone.hp, u, u, u);
+                            updatePlayer(u, player.actionPoints, u);
+                        }
                     }
                 }
             });
         }
-	
+
         // highlight handling
         {
             var secArea = getSectorArea(game.input.mousePointer.x, game.input.mousePointer.y);
             sector = secArea[0];
             area = secArea[1];
-			
+
             highlight = sectors[sector][area];
-			
-			if(sensor.posChange){
-				var activeSensorHighlight = getSectorArea(sensor.x, sensor.y);
-				var sensorSector = activeSensorHighlight[0];
-				var sensorArea = activeSensorHighlight[1];
-				var sensorHighlight = sectors[sensorSector][sensorArea];
-				
-				sensorOverlay.clear();
-				for(let count = 0; sensor.properties.range > count; count++) {
-						sensorOverlay.lineStyle(6, 0xff0000, 1);
-						graphs[sceneGraphics.indexOf(sectors[sensorSector][count])].draw(sensorOverlay);
-				}
-				sensor.posChange = false;
-			}
-			
+
+            if (sensor.posChange) {
+                var activeSensorHighlight = getSectorArea(sensor.x, sensor.y);
+                var sensorSector = activeSensorHighlight[0];
+                var sensorArea = activeSensorHighlight[1];
+                var sensorHighlight = sectors[sensorSector][sensorArea];
+
+                sensorOverlay.clear();
+                for (let count = 0; sensor.properties.range > count; count++) {
+                    sensorOverlay.lineStyle(6, 0xff0000, 1);
+                    graphs[sceneGraphics.indexOf(sectors[sensorSector][count])].draw(sensorOverlay);
+                }
+                sensor.posChange = false;
+            }
+
 
             if (oldSector != sector || oldArea != area) {
                 overlay.clear();
                 overlay.lineStyle(3, 0x00ff00, 1);
                 graphs[sceneGraphics.indexOf(highlight)].draw(overlay);
-				overlay.setDepth(50);
+                overlay.setDepth(50);
             }
             oldSector = sector;
             oldArea = area;
@@ -729,28 +741,28 @@
         }
     }
 
-    function getSectorArea ( positionX, positionY ) {
+    function getSectorArea(positionX, positionY) {
 
         // get sector
-		var angle;
-		
-		var t1 = (Math.sqrt( Math.pow(halfWidth - positionX,2) + Math.pow(halfHeight - positionY,2 )));
-		if(t1!=0){
-			angle = Math.acos( ((halfWidth - positionX) / t1));
-		}else {
-		angle = 0;
-		}
-		
-        if(positionY > halfHeight) {
+        var angle;
+
+        var t1 = (Math.sqrt(Math.pow(halfWidth - positionX, 2) + Math.pow(halfHeight - positionY, 2)));
+        if (t1 != 0) {
+            angle = Math.acos(((halfWidth - positionX) / t1));
+        } else {
+            angle = 0;
+        }
+
+        if (positionY > halfHeight) {
             angle *= -1;
         }
 
         var sector;
 
-        var distanceMouse = Math.sqrt( Math.pow(halfWidth - positionX,2) + Math.pow(halfHeight - positionY,2 ));
+        var distanceMouse = Math.sqrt(Math.pow(halfWidth - positionX, 2) + Math.pow(halfHeight - positionY, 2));
         var distance;
         var area;
-		var behind = false ;
+        var behind = false;
 
         var a = oneOutOfEightX;
         var b = oneOutOfEightY;
@@ -778,10 +790,10 @@
         }
 
         // get distance
-        distance = Math.sqrt( (Math.pow(x,2) + Math.pow(y,2 )) );
+        distance = Math.sqrt((Math.pow(x, 2) + Math.pow(y, 2)));
 
-        for(let i = 0; i < 3; i++) {
-            if(distanceMouse > distance * (i + 1) ) {
+        for (let i = 0; i < 3; i++) {
+            if (distanceMouse > distance * (i + 1)) {
                 area = i;
             }
         }
@@ -794,42 +806,41 @@
         // outer ellipse
         if (distanceMouse > distance * 4) {
             area = 2;
-			behind = true;
+            behind = true;
         }
 
-        return [sector,area,distanceMouse,behind];
-    }
-        
-    function gameOver(){
-            if(!music.mute){
-                gameoverMusic.pause();
-            }
-            gameOverText.setVisible(true);
-            game.scene.pause("default");
+        return [sector, area, distanceMouse, behind];
     }
 
-    function updateDrone(hp, payload, reward, type){
-        if(hp) droneDisplay.hp.setText("HP: " + hp);
-        if(payload) droneDisplay.payload.setText("Ladung: " + payload);
-        if(reward) droneDisplay.reward.setText("Belohnung: " + reward);
-        if(type) droneDisplay.info.setText("Info: " + type);
+    function gameOver() {
+        if (!music.mute) {
+            gameoverMusic.pause();
+        }
+        gameOverText.setVisible(true);
+        game.scene.pause("default");
     }
 
-    function updatePlayer(coins, points, stadium){
+    function updateDrone(hp, payload, reward, type) {
+        if (hp) droneDisplay.hp.setText("HP: " + hp);
+        if (payload) droneDisplay.payload.setText("Ladung: " + payload);
+        if (reward) droneDisplay.reward.setText("Belohnung: " + reward);
+        if (type) droneDisplay.info.setText("Info: " + type);
+    }
+
+    function updatePlayer(coins, points, stadium) {
         if (coins) playerDisplay.coins.setText("Vermögen: " + coins);
         if (points) playerDisplay.points.setText("AP: " + points);
         if (stadium) playerDisplay.stadium.setText("Stadion: " + stadium);
     }
 
-    function updateSensor(type, range, damage){
+    function updateSensor(type, range, damage) {
         if (type) sensorDisplay.type.setText("Typ: " + type);
         if (range) sensorDisplay.range.setText("Sichtweite: " + range);
         if (damage) sensorDisplay.damage.setText("Schaden: " + damage);
     }
 
 
-	
-    </script>
+</script>
 
 </body>
 </html>
