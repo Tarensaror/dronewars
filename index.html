@@ -217,7 +217,7 @@
 
                 if (pointer.x < window.innerWidth - window.innerWidth * 0.2) {
                     if(sensor.sector !== sec[0])
-                        updatePlayer(u, --player.actionPoints, u);
+                        updatePlayer("u", --player.actionPoints, "u");
 
                     var t = sectors[sec[0]][0];
                     var highSector = graphs[sceneGraphics.indexOf(t)];
@@ -391,7 +391,7 @@
                         sensor.properties.range++;
                         player.coins -= 1000;
                         updateSensor(u, sensor.properties.range, u);
-                        updatePlayer(player.coins, u, u);
+                        updatePlayer(player.coins, "u", "u");
                     }
                 });
 
@@ -402,7 +402,7 @@
                         sensor.properties.damage++;
                         player.coins -= 300;
                         updateSensor(u, u, sensor.properties.damage);
-                        updatePlayer(player.coins, u, u);
+                        updatePlayer(player.coins, "u", "u");
                     }
                 });
 
@@ -412,7 +412,7 @@
                     if (player.coins >= 100) {
                         player.stadium += 5;
                         player.coins -= 100;
-                        updatePlayer(player.coins, u, player.stadium);
+                        updatePlayer(player.coins, "u", player.stadium);
                     }
                 });
         }
@@ -564,6 +564,9 @@
         drone.payload = Math.floor(Math.random() * 4) + payloadBonus * Math.floor(Math.random()*2);
         
         drone.reward = Math.floor(Math.random() * 5) * 100 * drone.payload;
+        if(drone.reward == 0 && drone.payload != 0){
+            drone.reward = drone.payload * 100;
+        }
     }
 
     function spawnDrone() {
@@ -599,7 +602,7 @@
         newDrone.on('pointerover', function () {
             if (player.actionPoints > 0) {
                 updateDrone(newDrone.hp, newDrone.payload, newDrone.reward, droneInfo[newDrone.type]);
-                updatePlayer(u, --player.actionPoints, u)
+                updatePlayer("u", --player.actionPoints, "u")
             } else {
                 updateDrone("", "", "", "keine Informationen sichtbar");
             }
@@ -660,9 +663,8 @@
                 music.rate = 1.5;
             }
 
-            updatePlayer(u, u, player.stadium);
+            updatePlayer("u", "u", player.stadium);
             removeDrone(drone);
-            updateDrone("", "", "", ""); //empty drone display
         }
     }
 
@@ -690,7 +692,15 @@
                         score += (drone.reward*drone.hp);
                         updateScore(score);
                         player.coins += drone.reward;
-                        updatePlayer(player.coins, u, u);
+                        
+                        // Bestrafung, wenn Pakete abgeschossen werden.
+                        if(drone.payload == 0){
+                            player.coins -= 300;
+                            if (player.coins < 0){
+                                gameOver();
+                            }
+                        }
+                        updatePlayer(player.coins, "u", "u");
                         if (!music.mute) {
                             killMusic.play();
                         }
@@ -702,7 +712,7 @@
                         drone.setTint(0xff0000);
                         if (player.actionPoints > 0) {
                             updateDrone(drone.hp, "u", "u", "u");
-                            updatePlayer(u, player.actionPoints, u);
+                            updatePlayer("u", player.actionPoints, "u");
                         }
                     }
                 }
@@ -842,9 +852,9 @@
     }
 
     function updatePlayer(coins, points, stadium) {
-        if (coins) playerDisplay.coins.setText("Vermögen: " + coins);
-        if (points) playerDisplay.points.setText("AP: " + points);
-        if (stadium) playerDisplay.stadium.setText("Stadion: " + stadium);
+        if (coins != "u") playerDisplay.coins.setText("Vermögen: " + coins);
+        if (points != "u") playerDisplay.points.setText("AP: " + points);
+        if (stadium != "u") playerDisplay.stadium.setText("Stadion: " + stadium);
     }
 
     function updateSensor(type, range, damage) {
