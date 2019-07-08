@@ -143,6 +143,7 @@
 
         // sensor Display
         var sidebarTitle;
+        var score = 0;
 
         // drone Display
         var droneDisplay;
@@ -327,12 +328,14 @@
                 }
             });
 
-            sidebarTitle = this.make.text(textFieldConfig).setPadding(fontSize / 2).setDepth(101).setText('Drone Wars').setFont('Arial').setFontSize(fontSize * 2).setY(muteButton.height);
+            sidebarTitle = this.make.text(textFieldConfig).setPadding(fontSize * 0.3).setDepth(101).setText('Drone Wars').setFont('Arial').setFontSize(fontSize * 2).setY(muteButton.height);
+            
+            scoreDisplay = this.make.text(textFieldConfig).setPadding(fontSize * 0.3).setDepth(101).setText('Score: 0').setFont('Arial').setFontSize(fontSize*1.4).setY(sidebarTitle.y + sidebarTitle.height + fontSize);
 
 
             // drone Display
             var droneConfig = textFieldConfig;
-            droneConfig.y = sidebarTitle.height + fontSize;
+            droneConfig.y = scoreDisplay.y + scoreDisplay.height + fontSize;
 
             var droneTitle = this.make.text(droneConfig).setPadding(fontSize * 0.3).setDepth(101).setText('Drohne').setFont('Arial').setFontSize(fontSize * 1.3);
             var droneHP = this.make.text(droneConfig).setPadding(fontSize * 0.3).setDepth(101).setText('HP: ').setY(droneTitle.y + droneTitle.height);
@@ -679,6 +682,8 @@
                         }
                         updateDrone(' ', ' ', ' ', ' '); //empty drone display
                         removeDrone(drone);
+                        score += (drone.reward*drone.hp);
+                        updateScore(score);
                         player.coins += drone.reward;
                         updatePlayer(player.coins, u, u);
                         if (!music.mute) {
@@ -818,6 +823,10 @@
         }
         gameOverText.setVisible(true);
         game.scene.pause("default");
+    }
+    
+    function updateScore(score){
+        scoreDisplay.setText("Score: " + score);
     }
 
     function updateDrone(hp, payload, reward, type) {
