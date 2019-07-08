@@ -561,8 +561,8 @@
             case 3:
                 payloadBonus = 1;
         }
-        drone.payload = Math.floor(Math.random() * 4) + payloadBonus;
-
+        drone.payload = Math.floor(Math.random() * 4) + payloadBonus * Math.floor(Math.random()*2);
+        
         drone.reward = Math.floor(Math.random() * 5) * 100 * drone.payload;
     }
 
@@ -586,7 +586,9 @@
         setDroneProperties(newDrone);
 
         drones.add(newDrone);
+        
         this.physics.add.overlap(stadium, drones, collisionDroneStadium, null, this);
+        
 
         //richtung stadion. szenengröße beachten (bei geschwindigkeit)!
         var distance = Phaser.Math.Distance.Between(xPosition, yPosition, halfWidth, halfHeight);
@@ -599,7 +601,7 @@
                 updateDrone(newDrone.hp, newDrone.payload, newDrone.reward, droneInfo[newDrone.type]);
                 updatePlayer(u, --player.actionPoints, u)
             } else {
-                updateDrone('', '', '', 'keine Informationen sichtbar');
+                updateDrone("", "", "", "keine Informationen sichtbar");
             }
         });
 
@@ -627,38 +629,41 @@
     }
 
     function collisionDroneStadium(stadium, drone) {
-        player.stadium -= drone.payload;
-        if (player.stadium <= 0) {
+        if(drone.payload != 0){
+            player.stadium -= drone.payload;
+            if (player.stadium <= 0) {
 
-            if (trigger) {
-                trigger = false;
-                music.pause();
-                if (!music.mute) {
-                    gameoverMusic.play();
+                if (trigger) {
+                    trigger = false;
+                    music.pause();
+                    if (!music.mute) {
+                        gameoverMusic.play();
+                    }
                 }
+                ;
+
+                this.time.addEvent({
+                    delay: 1800,
+                    callback: gameOver,
+                    callbackScope: this,
+                    loop: false
+                });
             }
-            ;
 
-            this.time.addEvent({
-                delay: 1800,
-                callback: gameOver,
-                callbackScope: this,
-                loop: false
-            });
-        }
+            if (player.stadium <= 75) {
+                music.rate = 1.1;
+            }
+            if (player.stadium <= 50) {
+                music.rate = 1.3;
+            }
+            if (player.stadium <= 25) {
+                music.rate = 1.5;
+            }
 
-        if (player.stadium <= 75) {
-            music.rate = 1.1;
+            updatePlayer(u, u, player.stadium);
+            removeDrone(drone);
+            updateDrone("", "", "", ""); //empty drone display
         }
-        if (player.stadium <= 50) {
-            music.rate = 1.3;
-        }
-        if (player.stadium <= 25) {
-            music.rate = 1.5;
-        }
-
-        updatePlayer(u, u, player.stadium);
-        removeDrone(drone);
     }
 
     function update() {
@@ -680,7 +685,7 @@
                         if (debugOn) {
                             console.log('drone eliminated!!!');
                         }
-                        updateDrone(' ', ' ', ' ', ' '); //empty drone display
+                        updateDrone("", "", "", ""); //empty drone display
                         removeDrone(drone);
                         score += (drone.reward*drone.hp);
                         updateScore(score);
@@ -696,7 +701,7 @@
                         drone.hp -= sensor.properties.damage;
                         drone.setTint(0xff0000);
                         if (player.actionPoints > 0) {
-                            updateDrone(drone.hp, u, u, u);
+                            updateDrone(drone.hp, "u", "u", "u");
                             updatePlayer(u, player.actionPoints, u);
                         }
                     }
@@ -830,10 +835,10 @@
     }
 
     function updateDrone(hp, payload, reward, type) {
-        if (hp) droneDisplay.hp.setText("HP: " + hp);
-        if (payload) droneDisplay.payload.setText("Ladung: " + payload);
-        if (reward) droneDisplay.reward.setText("Belohnung: " + reward);
-        if (type) droneDisplay.info.setText("Info: " + type);
+        if (hp != "u") droneDisplay.hp.setText("HP: " + hp);
+        if (payload != "u") droneDisplay.payload.setText("Ladung: " + payload);
+        if (reward != "u") droneDisplay.reward.setText("Belohnung: " + reward);
+        if (type != "u") droneDisplay.info.setText("Info: " + type);
     }
 
     function updatePlayer(coins, points, stadium) {
