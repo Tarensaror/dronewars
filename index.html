@@ -200,6 +200,7 @@
     function create() {
         thisGame = this;
 
+        // Schwierigkeit wird erhöht nach difficultyPeriodInMinutes Minuten
         this.time.addEvent({
             delay: 1000 * 60 * difficultyPeriodInMinutes,
             callback: function () {
@@ -231,13 +232,14 @@
             }
         });
 
-
+        // Musik
         music = this.sound.add(backgroundTheme, config.audio);
         gameoverMusic = this.sound.add('gameover', config.gameover);
         killMusic = this.sound.add('kill', config.gameover);
 
         music.play(config.audio);
 
+        //Eingabemethoden
         pointer = this.input.activePointer;
         cursors = this.input.keyboard.createCursorKeys();
         spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
@@ -526,19 +528,24 @@
             })
         }
 
+        // Game Over Overlay
         gameOverText = this.add.text(0, 0, 'GAME OVER', {fontSize: '32px', fill: '#fff'});
         gameOverText.setBackgroundColor('#000');
         gameOverText.setPadding(halfWidth - gameOverText.width / 2, halfHeight - gameOverText.height / 2);
         gameOverText.setDepth(200);
         gameOverText.setVisible(false);
 
+        // Sensorbewegung
         sensor.anims.play('move', false);
     }
 
+    // Drohneneigenschaften erzeugen und zuweisen
     function setDroneProperties(drone) {
+        // Eigene Geschwindigkeit
         drone.speed = Math.random() + 0.05;
 
         /*
+         * Drohnen-Typ:
          * 0 - Multirotor
          * 1 - Single Rotor
          * 2 - Starrflügel
@@ -546,7 +553,10 @@
          */
         drone.type = Math.floor(Math.random() * 4);
 
+        // HP abhängig vom Typ
         drone.hp = Math.floor(Math.random() * 4) + 1 + drone.type;
+        
+        // Payload abhängig vomTyp
         var payloadBonus;
         switch (drone.type) {
             case 0:
@@ -563,12 +573,14 @@
         }
         drone.payload = Math.floor(Math.random() * 4) + payloadBonus * Math.floor(Math.random()*2);
         
+        // Belohnen abhängig vom Payload
         drone.reward = Math.floor(Math.random() * 5) * 100 * drone.payload;
         if(drone.reward == 0 && drone.payload != 0){
             drone.reward = drone.payload * 100;
         }
     }
 
+    // Neue Drohne erzeugen
     function spawnDrone() {
         //außerhalb vom bildschirm
         var xPosition = (Math.random() * (halfWidth * 2 + 400)) - 200;
@@ -591,9 +603,8 @@
         drones.add(newDrone);
         
         this.physics.add.overlap(stadium, drones, collisionDroneStadium, null, this);
-        
-
-        //richtung stadion. szenengröße beachten (bei geschwindigkeit)!
+    
+        //richtung stadion. szenengröße wird beachtet (bei geschwindigkeit)
         var distance = Phaser.Math.Distance.Between(xPosition, yPosition, halfWidth, halfHeight);
         var speed = droneSpeed * distance * newDrone.speed * 0.1;
         this.physics.moveTo(newDrone, halfWidth, halfHeight, speed);
@@ -607,15 +618,9 @@
                 updateDrone("", "", "", "keine Informationen sichtbar");
             }
         });
-
-        //Drohnennummer reinschreiben:
-        /*sidebarDroneInfoDisplay.setText(droneNumber);
-        droneNumber++;*/
-
-        //sensor fängt drohne - brauchen wir nicht, ist aber lustig
-        //this.physics.add.overlap(player, newDrone, collisionDroneStadium, null, this);
     }
 
+    // Drohne vom Spielfeld entfernen mit Explosion
     function removeDrone(drone) {
         var droneExplosion = thisGame.physics.add.sprite(drone.x, drone.y, 'explosionSprite');
         droneExplosion.anims.play('explode', false);
@@ -631,6 +636,7 @@
         drone.destroy();
     }
 
+    // Drohne trifft auf Stadion und explodiert, falls sie Schaden anrichten soll
     function collisionDroneStadium(stadium, drone) {
         if(drone.payload != 0){
             player.stadium -= drone.payload;
@@ -832,6 +838,7 @@
         return [sector, area, distanceMouse, behind];
     }
 
+    // Musik wird traurig, stoppt und Spiel wird beendet
     function gameOver() {
         if (!music.mute) {
             gameoverMusic.pause();
@@ -840,6 +847,7 @@
         game.scene.pause("default");
     }
     
+    // Update-Funktionen für Sidebar
     function updateScore(score){
         scoreDisplay.setText("Score: " + score);
     }
